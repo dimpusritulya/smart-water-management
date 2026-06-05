@@ -53,23 +53,45 @@ function App() {
     return () => unsubscribe();
   }, [user]); // <-- Adding 'user' here tells React to run this again if a different person logs in
 
-  // 2. Weather Fetch Logic
+  // 2. Weather Fetch Logic (Upgraded for Probability and Wind)
   const fetchWeather = async (lat, lon) => {
     try {
       const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
-      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+      // ADDED: &units=metric to easily calculate wind speeds
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
       
       const response = await fetch(url);
       const data = await response.json();
       
       const cityName = data.city.name;
-      const upcomingCondition = data.list[0].weather[0].main; 
+      const forecast = data.list[0]; // The next 3-hour window
       
-      const alertConditions = ["Rain", "Thunderstorm"];
-      
-      if (alertConditions.includes(upcomingCondition)) {
-        setWeatherAlert(`Approaching Storm Alert for ${cityName} (${upcomingCondition} expected). Refill your tank now to prepare for potential power cuts.`);
+      const upcomingCondition = forecast.weather[0].main; 
+      // 'pop' is a decimal (0 to 1), multiply by 100 to get a clean percentage
+      const rainProbability = Math.round(forecast.pop * 100); 
+      // Wind speed in m/s (10 m/s is roughly 36 km/h, enough to cause issues)
+      const windSpeed = forecast.wind.speed; 
+
+      // Thresholds: Only alert if it's ACTUALLY highly likely to happen
+      const MIN_RAIN_PROBABILITY = 60; // Require at least a 60% chance of rain
+      const HIGH_WIND_THRESHOLD = 10; // Require wind speeds over 10 m/s
+
+      let newAlert = "";
+
+      // 1. Check for High Winds FIRST (biggest cause of power cuts)
+      if (windSpeed >= HIGH_WIND_THRESHOLD) {
+        newAlert = `High Wind Warning for ${cityName} (${Math.round(windSpeed * 3.6)} km/h expected). Refill your tank now to prepare for wind-induced power cuts.`;
       }
+      // 2. Check for Reliable Storms/Rain SECOND
+      else if ((upcomingCondition === "Rain" || upcomingCondition === "Thunderstorm") && rainProbability >= MIN_RAIN_PROBABILITY) {
+        newAlert = `Approaching Storm Alert for ${cityName} (${rainProbability}% chance of rain). Refill your tank now to prepare for potential power cuts.`;
+      }
+      // 3. Clear the alert if the weather is fine
+      else {
+        newAlert = "";
+      }
+
+      setWeatherAlert(newAlert);
     } catch (error) {
       console.error("Could not fetch weather forecast", error);
     }
