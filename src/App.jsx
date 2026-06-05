@@ -31,32 +31,47 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Future Weather Forecast for Vijayawada
+  // 2. Fetch Future Weather Forecast based on User Location
   useEffect(() => {
-    const checkWeather = async () => {
+    const fetchWeather = async (lat, lon) => {
       try {
         const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
-        // CHANGED: Using the 'forecast' endpoint instead of 'weather'
-        const url = `https://api.openweathermap.org/data/2.5/forecast?q=Vijayawada&appid=${apiKey}`;
+        // CHANGED: Using latitude and longitude instead of a hardcoded city
+        const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        // CHANGED: Look at the first item in the forecast list (the next 3 hours)
+        // Grab the name of their actual city from the data
+        const cityName = data.city.name;
         const upcomingCondition = data.list[0].weather[0].main; 
         
-        // We only want to alert for severe approaching weather
         const alertConditions = ["Rain", "Thunderstorm"];
         
         if (alertConditions.includes(upcomingCondition)) {
-          setWeatherAlert(`Approaching Storm Alert (${upcomingCondition} expected soon). Refill your tank now to prepare for potential wind-induced power cuts.`);
+          setWeatherAlert(`Approaching Storm Alert for ${cityName} (${upcomingCondition} expected). Refill your tank now to prepare for potential power cuts.`);
         }
       } catch (error) {
         console.error("Could not fetch weather forecast", error);
       }
     };
-    
-    checkWeather();
+
+    // Ask the browser for the user's location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success: User allowed location access!
+          fetchWeather(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.error("User denied location access.", error);
+          // Fallback: If they deny it, just check Vijayawada anyway
+          fetchWeather(16.5062, 80.6480); 
+        }
+      );
+    } else {
+      console.log("Geolocation is not supported by this browser.");
+    }
   }, []);
 
   const toggleValve = () => {
