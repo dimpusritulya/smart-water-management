@@ -304,9 +304,6 @@ function App() {
             <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Water is safe for household use.</p>
           </div>
 
-        {/* --- REMINDERS PANEL --- */}
-        <RemindersPanel />
-
           {/* Card 5: Live Flow Rate */}
           <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
@@ -337,7 +334,25 @@ function App() {
             </p>
           </div>
 
-        </main>
+        {/* --- REMINDERS PANEL --- */}
+        <RemindersPanel />
+
+        {/* Card 7: Flow Rate & History */}
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2><FaTachometerAlt color="#64748b" style={{ marginRight: '8px' }} /> Weekly Water Usage</h2>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Current Flow</p>
+              <h2 style={{ margin: 0, color: '#1e293b' }}>{sensorData.flowRate} <span style={{ fontSize: '1rem' }}>L/min</span></h2>
+            </div>
+          </div>
+          <FlowGraph />
+        </div>
+
+        {/* System Alert History */}
+        <AlertHistory />
+
+      </main>
     </div>
   );
 }
