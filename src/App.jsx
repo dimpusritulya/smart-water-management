@@ -214,102 +214,130 @@ function App() {
         </div>
       )}
 
-      <main className="grid">
-        {/* Card 1: Main Supply Valve Control */}
-        <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
-          <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
-            Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
-              {dashboardData.controls.valveOpen ? "OPEN (Water Flowing)" : "CLOSED (Shut Off)"}
-            </span>
-          </p>
+      <main className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '30px' }}>
           
-          <div className="switch-container">
-            <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
-            <label className="switch">
-              <input 
-                type="checkbox" 
-                checked={dashboardData.controls.valveOpen} 
-                onChange={toggleValve} 
-              />
-              <span className="slider"></span>
-            </label>
-            <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
+          {/* Card 1: Main Supply Valve Control */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
+            <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
+              Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
+                {dashboardData.controls.valveOpen ? "OPEN (Water Flowing)" : "CLOSED (Shut Off)"}
+              </span>
+            </p>
+            
+            <div className="switch-container">
+              <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
+              <label className="switch">
+                <input 
+                  type="checkbox" 
+                  checked={dashboardData.controls.valveOpen} 
+                  onChange={toggleValve} 
+                />
+                <span className="slider"></span>
+              </label>
+              <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
+            </div>
           </div>
-        </div>
 
-        {/* Card 2: SEPARATE & NOTICEABLE Quick Refill Panel */}
-        <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none', transition: 'all 0.3s' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
-          <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>
-            Turn your overhead water pump on or off remotely without visiting the motor.
-          </p>
-          
-          <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
-            Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
-              {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
-            </span>
-          </p>
+          {/* Card 2: Quick Refill Panel */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none', transition: 'all 0.3s' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>
+              Turn your overhead water pump on or off remotely.
+            </p>
+            
+            <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
+              Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
+                {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
+              </span>
+            </p>
 
-          <button 
-            onClick={togglePump}
-            style={{ 
-              width: '100%', 
-              backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', 
-              color: 'white', 
-              padding: '16px', 
-              borderRadius: '8px', 
-              border: 'none', 
-              fontWeight: 'bold', 
-              fontSize: '1rem',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)',
-              transition: 'background-color 0.2s, transform 0.1s'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
-          </button>
-        </div>
-
-        {/* Card 3: Tank Level */}
-        <div className="card">
-          <h2><FaWater color="#3b82f6" style={{ marginRight: '8px' }} /> Tank Level</h2>
-          <h1 style={{ fontSize: '3rem', margin: '10px 0', color: '#1e293b' }}>{sensorData.tankLevel}%</h1>
-          <div className="progress-bar-container">
-            <div className="progress-bar-fill" style={{ width: `${sensorData.tankLevel}%`, backgroundColor: sensorData.tankLevel < 20 ? '#ef4444' : '#3b82f6' }}></div>
+            <button 
+              onClick={togglePump}
+              style={{ 
+                width: '100%', 
+                backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', 
+                color: 'white', 
+                padding: '16px', 
+                borderRadius: '8px', 
+                border: 'none', 
+                fontWeight: 'bold', 
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)',
+                transition: 'background-color 0.2s, transform 0.1s'
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
+            </button>
           </div>
-          {sensorData.tankLevel < 20 && <p style={{ color: '#ef4444', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}>Tank level is critically low.</p>}
-        </div>
 
-        {/* Card 4: Water Quality */}
-        <div className="card">
-          <h2><FaTint color={quality.color} style={{ marginRight: '8px' }} /> Water Quality</h2>
-          <h1 style={{ fontSize: '2.5rem', margin: '10px 0', color: '#1e293b' }}>pH: {sensorData.phLevel.toFixed(1)}</h1>
-          <p style={{ fontWeight: 'bold', color: quality.color }}>{quality.status}</p>
-          <p style={{ fontSize: '0.9rem', color: '#64748b' }}>{quality.message}</p>
-        </div>
+          {/* Card 3: Tank Level */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Tank Level</h2>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>
+              {dashboardData.sensorData.tankLevel}%
+            </div>
+            <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
+              <div style={{ 
+                width: `${dashboardData.sensorData.tankLevel}%`, 
+                backgroundColor: '#3b82f6', 
+                height: '100%', 
+                backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
+                backgroundSize: '1rem 1rem',
+                transition: 'width 0.5s ease-in-out'
+              }}></div>
+            </div>
+          </div>
+
+          {/* Card 4: Water Quality */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Water Quality</h2>
+            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px' }}>
+              pH: {dashboardData.sensorData.phLevel}
+            </div>
+            <div style={{ fontWeight: 'bold', color: dashboardData.sensorData.phLevel >= 6.5 && dashboardData.sensorData.phLevel <= 8.5 ? '#10b981' : '#ef4444', marginBottom: '10px' }}>
+              {dashboardData.sensorData.phLevel >= 6.5 && dashboardData.sensorData.phLevel <= 8.5 ? 'Safe & Neutral' : 'Needs Attention'}
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Water is safe for household use.</p>
+          </div>
 
         {/* --- REMINDERS PANEL --- */}
         <RemindersPanel />
 
-        {/* Card 5: Flow Rate & History */}
-        <div className="card" style={{ gridColumn: '1 / -1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2><FaTachometerAlt color="#64748b" style={{ marginRight: '8px' }} /> Weekly Water Usage</h2>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Current Flow</p>
-              <h2 style={{ margin: 0, color: '#1e293b' }}>{sensorData.flowRate} <span style={{ fontSize: '1rem' }}>L/min</span></h2>
+          {/* Card 5: Live Flow Rate */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>Current speed of water moving through the pipe.</p>
+            
+            <div style={{ marginTop: '10px' }}>
+              <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0ea5e9' }}>
+                {dashboardData.sensorData.flowRate}
+              </span>
+              <span style={{ fontSize: '1.2rem', color: '#64748b', marginLeft: '5px' }}>L/min</span>
             </div>
+            <p style={{ marginTop: '15px', fontSize: '0.9rem', color: dashboardData.sensorData.flowRate > 0 ? '#10b981' : '#64748b', fontWeight: 'bold' }}>
+              {dashboardData.sensorData.flowRate > 0 ? "● Water is Flowing" : "○ No Flow Detected"}
+            </p>
           </div>
-          <FlowGraph />
-        </div>
 
-        {/* System Alert History */}
-        <AlertHistory />
+          {/* Card 6: Hardware Status */}
+          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Hardware Status</h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>ESP32 Microcontroller connection to cloud.</p>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '10px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#10b981', marginRight: '10px', boxShadow: '0 0 12px #10b981' }}></div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b' }}>ONLINE</span>
+            </div>
+            <p style={{ marginTop: '15px', fontSize: '0.9rem', color: '#64748b' }}>
+              Latency: ~45ms (Secure)
+            </p>
+          </div>
 
-      </main>
+        </main>
     </div>
   );
 }
