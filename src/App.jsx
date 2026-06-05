@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { database } from './firebaseConfig';
 import { ref, onValue, set } from 'firebase/database';
 import { FaWater, FaTint, FaTachometerAlt, FaExclamationTriangle, FaCloudShowersHeavy, FaMapMarkerAlt } from 'react-icons/fa';
-import FlowGraph from './components/FlowGraph';
+import UsageGraph from './components/UsageGraph';
 import RemindersPanel from './components/RemindersPanel';
 import AlertHistory from './components/AlertHistory';
 import './App.css';
@@ -337,16 +337,21 @@ function App() {
         {/* --- REMINDERS PANEL --- */}
         <RemindersPanel />
 
-        {/* Card 7: Flow Rate & History */}
-        <div className="card" style={{ gridColumn: '1 / -1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2><FaTachometerAlt color="#64748b" style={{ marginRight: '8px' }} /> Weekly Water Usage</h2>
+        {/* Full-Width Section: Weekly Water Usage */}
+        <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>
+              Weekly Water Usage
+            </h2>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Current Flow</p>
-              <h2 style={{ margin: 0, color: '#1e293b' }}>{sensorData.flowRate} <span style={{ fontSize: '1rem' }}>L/min</span></h2>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Estimated Total This Week</p>
+              {/* Note: You can hook this 1,250 number up to your Firebase data later! */}
+              <h2 style={{ margin: 0, color: '#3b82f6' }}>1,250 <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span></h2>
             </div>
           </div>
-          <FlowGraph />
+          
+          {/* NEW: Replaced FlowGraph with UsageGraph */}
+          <UsageGraph />
         </div>
 
         {/* System Alert History */}
