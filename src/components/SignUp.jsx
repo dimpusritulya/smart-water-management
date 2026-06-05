@@ -6,6 +6,7 @@ import { FaWater, FaLock, FaEnvelope } from 'react-icons/fa';
 
 function Signup({ onSwitchView }) {
   const [email, setEmail] = useState('');
+  
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
