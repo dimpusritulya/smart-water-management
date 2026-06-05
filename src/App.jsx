@@ -31,28 +31,28 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Live Weather Data for Vijayawada
+  // 2. Fetch Future Weather Forecast for Vijayawada
   useEffect(() => {
     const checkWeather = async () => {
       try {
-        // Keep your actual OpenWeatherMap API key here!
         const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=Vijayawada&appid=${apiKey}`;
+        // CHANGED: Using the 'forecast' endpoint instead of 'weather'
+        const url = `https://api.openweathermap.org/data/2.5/forecast?q=Vijayawada&appid=${apiKey}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        // Revert back to checking for actual severe weather
-        const condition = data.weather[0].main; 
-      
-      // Catch a wider range of weather for presentation purposes
-      const alertConditions = ["Rain", "Thunderstorm", "Drizzle", "Clouds", "Mist"];
-      
-      if (alertConditions.includes(condition)) {
-        setWeatherAlert(`Live Weather Alert (${condition}). Consider refilling your tank now to avoid power-cut-related water shortages.`);
-      }
+        // CHANGED: Look at the first item in the forecast list (the next 3 hours)
+        const upcomingCondition = data.list[0].weather[0].main; 
+        
+        // We only want to alert for severe approaching weather
+        const alertConditions = ["Rain", "Thunderstorm"];
+        
+        if (alertConditions.includes(upcomingCondition)) {
+          setWeatherAlert(`Approaching Storm Alert (${upcomingCondition} expected soon). Refill your tank now to prepare for potential wind-induced power cuts.`);
+        }
       } catch (error) {
-        console.error("Could not fetch weather data", error);
+        console.error("Could not fetch weather forecast", error);
       }
     };
     
