@@ -30,13 +30,6 @@ function App() {
     sensorData: { flowRate: 0, phLevel: 7.0, tankLevel: 0 },
     alerts: { leakDetected: false }
   });
-
-  // Theme State
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
   
   const [weatherAlert, setWeatherAlert] = useState("");
   // New state to track if we should show the location explanation banner
@@ -165,7 +158,6 @@ function App() {
   const weeklyData = [120, 135, 100, 150, 90, 150, 160];
   const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
 
-  // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE...
 
   // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE
   if (!user) {
@@ -178,63 +170,18 @@ function App() {
 
   // IF LOGGED IN, SHOW DASHBOARD
   return (
-    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
+    <div className="dashboard-container">
       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
-        {/* Updated Header Section */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          width: '100%', 
-          padding: '0 10px', 
-          boxSizing: 'border-box', 
-          marginBottom: '30px' 
-        }}>
-          
-          <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
-            <h1 style={{ margin: '0 0 5px 0', color: isDarkMode ? '#f8fafc' : 'inherit' }}>
-              Smart Water Dashboard
-            </h1>
-            <p style={{ margin: 0 }}>
-              Monitoring: Apartment 101
-            </p>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <button 
-              onClick={toggleTheme}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: isDarkMode ? '#334155' : '#ffffff',
-                color: isDarkMode ? '#f8fafc' : '#1e293b',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-            </button>
-            
-            {/* Make sure your logout function is hooked up here! */}
-            <button style={{ 
-                padding: '10px 16px', 
-                borderRadius: '8px', 
-                border: 'none', 
-                backgroundColor: '#ef4444', 
-                color: 'white', 
-                fontWeight: 'bold', 
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-            }}>
-              Logout
-            </button>
-          </div>
-          
+        <div style={{ textAlign: 'left' }}>
+          <h1>Smart Water Dashboard</h1>
+          <p>Monitoring: Apartment 101</p>
         </div>
+        <button 
+          onClick={() => signOut(auth)}
+          style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          Logout
+        </button>
       </header>
 
       {/* --- NEW: The Soft Prompt Location Banner --- */}
@@ -272,7 +219,8 @@ function App() {
         </div>
       )}
 
-      <main className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '30px' }}>
+      <main className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '30px' }}>
+          
           {/* Card 1: Main Supply Valve Control */}
           <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
             <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
