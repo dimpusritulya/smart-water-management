@@ -154,6 +154,12 @@ function App() {
   const { controls, sensorData, alerts } = dashboardData;
   const quality = getWaterQualityInfo(sensorData.phLevel);
 
+  // 3. Weekly Usage Math (Paste this right above your 'return' statement!)
+  const weeklyData = [120, 135, 100, 150, 90, 150, 160];
+  const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
+
+  // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE...
+
   // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE
   if (!user) {
     return isLoginView ? (
