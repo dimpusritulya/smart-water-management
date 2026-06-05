@@ -1,7 +1,7 @@
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Login from './components/Login';
-import Signup from './components/Signup'; 
+import Signup from './components/SignupPage'; 
 import { useState, useEffect } from 'react';
 import { database } from './firebaseConfig';
 import { ref, onValue, set } from 'firebase/database';
