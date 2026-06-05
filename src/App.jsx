@@ -1,6 +1,7 @@
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Login from './components/Login';
+import Signup from './components/Signup'; 
 import { useState, useEffect } from 'react';
 import { database } from './firebaseConfig';
 import { ref, onValue, set } from 'firebase/database';
@@ -12,6 +13,7 @@ import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isLoginView, setIsLoginView] = useState(true);
 
   // Monitor login status
   useEffect(() => {
@@ -119,9 +121,13 @@ function App() {
   const { controls, sensorData, alerts } = dashboardData;
   const quality = getWaterQualityInfo(sensorData.phLevel);
 
-  // IF NOT LOGGED IN, SHOW LOGIN PAGE
+  // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE
   if (!user) {
-    return <Login />;
+    return isLoginView ? (
+      <Login onSwitchView={() => setIsLoginView(false)} />
+    ) : (
+      <Signup onSwitchView={() => setIsLoginView(true)} />
+    );
   }
 
   // IF LOGGED IN, SHOW DASHBOARD
