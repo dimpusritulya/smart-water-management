@@ -45,9 +45,14 @@ function App() {
         const condition = data.weather[0].main; 
         
         // Revert back to checking for actual severe weather
-        if (condition === "Rain" || condition === "Thunderstorm") {
-          setWeatherAlert(`Severe weather detected (${condition}). Consider refilling your tank now to avoid power-cut-related water shortages.`);
-        }
+        const condition = data.weather[0].main; 
+      
+      // Catch a wider range of weather for presentation purposes
+      const alertConditions = ["Rain", "Thunderstorm", "Drizzle", "Clouds", "Mist"];
+      
+      if (alertConditions.includes(condition)) {
+        setWeatherAlert(`Live Weather Alert (${condition}). Consider refilling your tank now to avoid power-cut-related water shortages.`);
+      }
       } catch (error) {
         console.error("Could not fetch weather data", error);
       }
