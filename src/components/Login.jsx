@@ -3,7 +3,7 @@ import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { FaWater, FaLock, FaEnvelope } from 'react-icons/fa';
 
-function Login({ onSwitchView }) { {
+function Login({ onSwitchView })  {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -67,8 +67,8 @@ function Login({ onSwitchView }) { {
 
         <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem', color: '#64748b' }}>
              Don't have an account? <span onClick={onSwitchView} style={{ color: '#3b82f6', fontWeight: 'bold', cursor: 'pointer' }}>Sign Up</span>
-           </p>
-           
+        </p>
+
       </div>
     </div>
   );
