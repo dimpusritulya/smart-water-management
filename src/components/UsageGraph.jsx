@@ -4,9 +4,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // Mock data representing daily water usage in Liters
 const weeklyData = [
   { day: 'Mon', usage: 120 },
-  { day: 'Tue', usage: 132 },
-  { day: 'Wed', usage: 101 },
-  { day: 'Thu', usage: 145 },
+  { day: 'Tue', usage: 135 },
+  { day: 'Wed', usage: 100 },
+  { day: 'Thu', usage: 150 },
   { day: 'Fri', usage: 90 },
   { day: 'Sat', usage: 150 },
   { day: 'Sun', usage: 160 },
