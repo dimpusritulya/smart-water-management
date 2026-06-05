@@ -1,3 +1,6 @@
+import { auth } from './firebaseConfig';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import Login from './components/Login';
 import { useState, useEffect } from 'react';
 import { database } from './firebaseConfig';
 import { ref, onValue, set } from 'firebase/database';
@@ -8,7 +11,17 @@ import AlertHistory from './components/AlertHistory';
 import './App.css';
 
 function App() {
-  const userId = "user_apt_101";
+  const [user, setUser] = useState(null);
+
+  // Monitor login status
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  
   
   const [dashboardData, setDashboardData] = useState({
     controls: { valveOpen: true },
@@ -20,17 +33,23 @@ function App() {
   // New state to track if we should show the location explanation banner
   const [locationStatus, setLocationStatus] = useState("idle");
 
-  // 1. Listen for Firebase Data
+// 1. Listen for Firebase Data dynamically based on logged-in user
   useEffect(() => {
-    const userRef = ref(database, `users/${userId}`);
+    // Safety check: If no one is logged in yet, don't try to fetch data
+    if (!user) return; 
+
+    // Look at the specific folder for THIS logged-in user
+    const userRef = ref(database, `users/${user.uid}`);
+    
     const unsubscribe = onValue(userRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         setDashboardData(prevState => ({ ...prevState, ...data }));
       }
     });
+    
     return () => unsubscribe();
-  }, []);
+  }, [user]); // <-- Adding 'user' here tells React to run this again if a different person logs in
 
   // 2. Weather Fetch Logic
   const fetchWeather = async (lat, lon) => {
@@ -85,7 +104,9 @@ function App() {
   }, []);
 
   const toggleValve = () => {
-    const valveRef = ref(database, `users/${userId}/controls/valveOpen`);
+    if (!user) return; // Safety check
+    
+    const valveRef = ref(database, `users/${user.uid}/controls/valveOpen`);
     set(valveRef, !dashboardData.controls.valveOpen);
   };
 
@@ -98,11 +119,25 @@ function App() {
   const { controls, sensorData, alerts } = dashboardData;
   const quality = getWaterQualityInfo(sensorData.phLevel);
 
+  // IF NOT LOGGED IN, SHOW LOGIN PAGE
+  if (!user) {
+    return <Login />;
+  }
+
+  // IF LOGGED IN, SHOW DASHBOARD
   return (
     <div className="dashboard-container">
-      <header className="header">
-        <h1>Smart Water Dashboard</h1>
-        <p>Monitoring: Apartment 101</p>
+      <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ textAlign: 'left' }}>
+          <h1>Smart Water Dashboard</h1>
+          <p>Monitoring: Apartment 101</p>
+        </div>
+        <button 
+          onClick={() => signOut(auth)}
+          style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          Logout
+        </button>
       </header>
 
       {/* --- NEW: The Soft Prompt Location Banner --- */}
