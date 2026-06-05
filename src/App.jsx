@@ -180,38 +180,61 @@ function App() {
   return (
     <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-  <div>
-    <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#1e293b' }}>
-      Smart Water Dashboard
-    </h1>
-    <p style={{ margin: 0, color: '#64748b', textTransform: 'uppercase', fontSize: '0.9rem' }}>
-      Monitoring: Apartment 101
-    </p>
-  </div>
-  
-  <div style={{ display: 'flex', gap: '15px' }}>
-    {/* NEW: Dark Mode Toggle Button */}
-    <button 
-      onClick={toggleTheme}
-      style={{
-        padding: '8px 16px',
-        borderRadius: '8px',
-        border: 'none',
-        backgroundColor: isDarkMode ? '#334155' : '#e2e8f0',
-        color: isDarkMode ? '#f8fafc' : '#1e293b',
-        cursor: 'pointer',
-        fontWeight: 'bold',
-        transition: 'all 0.3s'
-      }}
-    >
-      {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-    </button>
-    
-    {/* Your existing Logout Button */}
-    <button style={{ /* ... your existing styles ... */ }}>Logout</button>
-  </div>
-</div>
+
+        {/* Updated Header Section */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          width: '100%', 
+          padding: '0 10px', 
+          boxSizing: 'border-box', 
+          marginBottom: '30px' 
+        }}>
+          
+          <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
+            <h1 style={{ margin: '0 0 5px 0', color: isDarkMode ? '#f8fafc' : 'inherit' }}>
+              Smart Water Dashboard
+            </h1>
+            <p style={{ margin: 0 }}>
+              Monitoring: Apartment 101
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <button 
+              onClick={toggleTheme}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: isDarkMode ? '#334155' : '#ffffff',
+                color: isDarkMode ? '#f8fafc' : '#1e293b',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            </button>
+            
+            {/* Make sure your logout function is hooked up here! */}
+            <button style={{ 
+                padding: '10px 16px', 
+                borderRadius: '8px', 
+                border: 'none', 
+                backgroundColor: '#ef4444', 
+                color: 'white', 
+                fontWeight: 'bold', 
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}>
+              Logout
+            </button>
+          </div>
+          
+        </div>
       </header>
 
       {/* --- NEW: The Soft Prompt Location Banner --- */}
