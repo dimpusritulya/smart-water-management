@@ -215,15 +215,17 @@ function App() {
       )}
 
       <main className="grid">
-        {/* Card 1: System Controls (Valve & Pump) */}
-        <div className="card">
-          <h2>System Controls</h2>
-          <p>Main Valve: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
-            {dashboardData.controls.valveOpen ? "OPEN" : "CLOSED"}
-          </span></p>
+        {/* Card 1: Main Supply Valve Control */}
+        <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
+          <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
+            Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
+              {dashboardData.controls.valveOpen ? "OPEN (Water Flowing)" : "CLOSED (Shut Off)"}
+            </span>
+          </p>
           
-          <div className="switch-container" style={{ marginBottom: '20px' }}>
-            <span style={{ color: '#64748b', fontWeight: 'bold' }}>OFF</span>
+          <div className="switch-container">
+            <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
             <label className="switch">
               <input 
                 type="checkbox" 
@@ -232,36 +234,46 @@ function App() {
               />
               <span className="slider"></span>
             </label>
-            <span style={{ color: '#64748b', fontWeight: 'bold' }}>ON</span>
+            <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
           </div>
+        </div>
 
-          {/* Divider Line */}
-          <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '15px 0' }} />
-
-          <p>Motor Pump: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
-            {dashboardData.controls.pumpStatus === "ON" ? "RUNNING (Refilling)" : "IDLE (Off)"}
-          </span></p>
+        {/* Card 2: SEPARATE & NOTICEABLE Quick Refill Panel */}
+        <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none', transition: 'all 0.3s' }}>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
+          <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>
+            Turn your overhead water pump on or off remotely without visiting the motor.
+          </p>
+          
+          <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
+            Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
+              {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
+            </span>
+          </p>
 
           <button 
             onClick={togglePump}
             style={{ 
-              marginTop: '10px', 
               width: '100%', 
               backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', 
               color: 'white', 
-              padding: '12px', 
+              padding: '16px', 
               borderRadius: '8px', 
               border: 'none', 
               fontWeight: 'bold', 
+              fontSize: '1rem',
               cursor: 'pointer',
-              transition: 'background-color 0.2s'
+              boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)',
+              transition: 'background-color 0.2s, transform 0.1s'
             }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            {dashboardData.controls.pumpStatus === "ON" ? "Turn Pump OFF" : "Force Refill Now"}
+            {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
           </button>
         </div>
 
-        {/* Card 2: Tank Level */}
+        {/* Card 3: Tank Level */}
         <div className="card">
           <h2><FaWater color="#3b82f6" style={{ marginRight: '8px' }} /> Tank Level</h2>
           <h1 style={{ fontSize: '3rem', margin: '10px 0', color: '#1e293b' }}>{sensorData.tankLevel}%</h1>
@@ -271,7 +283,7 @@ function App() {
           {sensorData.tankLevel < 20 && <p style={{ color: '#ef4444', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}>Tank level is critically low.</p>}
         </div>
 
-        {/* Card 3: Water Quality */}
+        {/* Card 4: Water Quality */}
         <div className="card">
           <h2><FaTint color={quality.color} style={{ marginRight: '8px' }} /> Water Quality</h2>
           <h1 style={{ fontSize: '2.5rem', margin: '10px 0', color: '#1e293b' }}>pH: {sensorData.phLevel.toFixed(1)}</h1>
@@ -282,7 +294,7 @@ function App() {
         {/* --- REMINDERS PANEL --- */}
         <RemindersPanel />
 
-        {/* Card 4: Flow Rate & History */}
+        {/* Card 5: Flow Rate & History */}
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2><FaTachometerAlt color="#64748b" style={{ marginRight: '8px' }} /> Weekly Water Usage</h2>
