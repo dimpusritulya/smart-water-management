@@ -42,8 +42,6 @@ function App() {
         const response = await fetch(url);
         const data = await response.json();
         
-        const condition = data.weather[0].main; 
-        
         // Revert back to checking for actual severe weather
         const condition = data.weather[0].main; 
       
