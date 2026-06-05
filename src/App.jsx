@@ -345,8 +345,9 @@ function App() {
             </h2>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Estimated Total This Week</p>
-              {/* Note: You can hook this 1,250 number up to your Firebase data later! */}
-              <h2 style={{ margin: 0, color: '#3b82f6' }}>1,250 <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span></h2>
+              <h2 style={{ margin: 0, color: '#3b82f6' }}>
+                {calculatedTotal.toLocaleString()} <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span>
+              </h2>
             </div>
           </div>
           

@@ -12,6 +12,8 @@ const weeklyData = [
   { day: 'Sun', usage: 160 },
 ];
 
+const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
+
 function UsageGraph() {
   return (
     <div style={{ width: '100%', height: 250, marginTop: '20px' }}>
