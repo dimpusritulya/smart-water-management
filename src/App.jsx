@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { database } from './firebaseConfig';
 import { ref, onValue, set } from 'firebase/database';
-import { FaWater, FaTint, FaTachometerAlt, FaExclamationTriangle, FaCloudShowersHeavy } from 'react-icons/fa';
+import { FaWater, FaTint, FaTachometerAlt, FaExclamationTriangle, FaCloudShowersHeavy, FaMapMarkerAlt } from 'react-icons/fa';
 import FlowGraph from './components/FlowGraph';
 import RemindersPanel from './components/RemindersPanel';
 import AlertHistory from './components/AlertHistory';
@@ -16,8 +16,9 @@ function App() {
     alerts: { leakDetected: false }
   });
   
-  // New state to hold weather warnings
   const [weatherAlert, setWeatherAlert] = useState("");
+  // New state to track if we should show the location explanation banner
+  const [locationStatus, setLocationStatus] = useState("idle");
 
   // 1. Listen for Firebase Data
   useEffect(() => {
@@ -31,46 +32,55 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Future Weather Forecast based on User Location
-  useEffect(() => {
-    const fetchWeather = async (lat, lon) => {
-      try {
-        const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
-        // CHANGED: Using latitude and longitude instead of a hardcoded city
-        const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        // Grab the name of their actual city from the data
-        const cityName = data.city.name;
-        const upcomingCondition = data.list[0].weather[0].main; 
-        
-        const alertConditions = ["Rain", "Thunderstorm"];
-        
-        if (alertConditions.includes(upcomingCondition)) {
-          setWeatherAlert(`Approaching Storm Alert for ${cityName} (${upcomingCondition} expected). Refill your tank now to prepare for potential power cuts.`);
-        }
-      } catch (error) {
-        console.error("Could not fetch weather forecast", error);
+  // 2. Weather Fetch Logic
+  const fetchWeather = async (lat, lon) => {
+    try {
+      const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const cityName = data.city.name;
+      const upcomingCondition = data.list[0].weather[0].main; 
+      
+      const alertConditions = ["Rain", "Thunderstorm"];
+      
+      if (alertConditions.includes(upcomingCondition)) {
+        setWeatherAlert(`Approaching Storm Alert for ${cityName} (${upcomingCondition} expected). Refill your tank now to prepare for potential power cuts.`);
       }
-    };
+    } catch (error) {
+      console.error("Could not fetch weather forecast", error);
+    }
+  };
 
-    // Ask the browser for the user's location
+  // 3. The "Soft Prompt" Function triggered by the user
+  const requestLocation = () => {
+    setLocationStatus("asking");
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // Success: User allowed location access!
+          setLocationStatus("granted");
           fetchWeather(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
           console.error("User denied location access.", error);
-          // Fallback: If they deny it, just check Vijayawada anyway
+          setLocationStatus("denied");
+          // Fallback to a default location if they deny
           fetchWeather(16.5062, 80.6480); 
         }
       );
-    } else {
-      console.log("Geolocation is not supported by this browser.");
+    }
+  };
+
+  // 4. Automatically check if they already granted permission in a previous session
+  useEffect(() => {
+    if ("permissions" in navigator) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          requestLocation();
+        }
+      });
     }
   }, []);
 
@@ -95,6 +105,25 @@ function App() {
         <p>Monitoring: Apartment 101</p>
       </header>
 
+      {/* --- NEW: The Soft Prompt Location Banner --- */}
+      {locationStatus === "idle" && (
+        <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '20px', borderRadius: '12px', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FaMapMarkerAlt size={24} color="#22c55e" />
+            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Enable Smart Weather Alerts</h3>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#15803d', lineHeight: '1.5' }}>
+            To accurately predict approaching storms in your area and warn you to refill your tank <strong>before</strong> wind-induced power cuts occur, this dashboard requires your location.
+          </p>
+          <button 
+            onClick={requestLocation} 
+            style={{ backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content', transition: '0.2s' }}
+          >
+            Allow Location Access
+          </button>
+        </div>
+      )}
+
       {/* Emergency Leak Alert */}
       {alerts.leakDetected && (
         <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
@@ -105,7 +134,7 @@ function App() {
 
       {/* Weather Predictive Alert */}
       {weatherAlert && (
-        <div style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
+        <div className="alert-banner" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
           <FaCloudShowersHeavy style={{ marginRight: '10px' }} />
           {weatherAlert}
         </div>
@@ -115,7 +144,7 @@ function App() {
         {/* Card 1: Main Valve Control */}
         <div className="card">
           <h2>Main Supply Valve</h2>
-          <p>Status: <span style={{ fontWeight: 'bold', color: controls.valveOpen ? '#28a745' : '#dc3545' }}>
+          <p>Status: <span style={{ fontWeight: 'bold', color: controls.valveOpen ? '#10b981' : '#ef4444' }}>
             {controls.valveOpen ? "OPEN (Flowing)" : "CLOSED (Shut Off)"}
           </span></p>
           
@@ -137,10 +166,10 @@ function App() {
         <div className="card">
           <h2><FaWater color="#3b82f6" style={{ marginRight: '8px' }} /> Tank Level</h2>
           <h1 style={{ fontSize: '3rem', margin: '10px 0', color: '#1e293b' }}>{sensorData.tankLevel}%</h1>
-          <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '10px', height: '20px', overflow: 'hidden' }}>
-            <div style={{ width: `${sensorData.tankLevel}%`, backgroundColor: sensorData.tankLevel < 20 ? '#ef4444' : '#3b82f6', height: '100%', transition: 'width 0.5s ease-in-out' }}></div>
+          <div className="progress-bar-container">
+            <div className="progress-bar-fill" style={{ width: `${sensorData.tankLevel}%`, backgroundColor: sensorData.tankLevel < 20 ? '#ef4444' : '#3b82f6' }}></div>
           </div>
-          {sensorData.tankLevel < 20 && <p style={{ color: '#ef4444', marginTop: '10px', fontSize: '0.9rem' }}>Tank level is critically low.</p>}
+          {sensorData.tankLevel < 20 && <p style={{ color: '#ef4444', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}>Tank level is critically low.</p>}
         </div>
 
         {/* Card 3: Water Quality */}
@@ -151,7 +180,7 @@ function App() {
           <p style={{ fontSize: '0.9rem', color: '#64748b' }}>{quality.message}</p>
         </div>
 
-        {/* --- NEW REMINDERS PANEL --- */}
+        {/* --- REMINDERS PANEL --- */}
         <RemindersPanel />
 
         {/* Card 4: Flow Rate & History */}
