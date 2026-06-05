@@ -26,7 +26,7 @@ function App() {
   
   
   const [dashboardData, setDashboardData] = useState({
-    controls: { valveOpen: true },
+    controls: { valveOpen: true, pumpStatus: "OFF" },
     sensorData: { flowRate: 0, phLevel: 7.0, tankLevel: 0 },
     alerts: { leakDetected: false }
   });
@@ -134,6 +134,17 @@ function App() {
     set(valveRef, !dashboardData.controls.valveOpen);
   };
 
+  const togglePump = () => {
+    if (!user) return; // Safety check
+    
+    // Read the current state from dashboardData and flip it
+    const newStatus = dashboardData.controls.pumpStatus === "ON" ? "OFF" : "ON";
+    
+    // Send the new status to Firebase
+    const pumpRef = ref(database, `users/${user.uid}/controls/pumpStatus`);
+    set(pumpRef, newStatus);
+  };
+
   const getWaterQualityInfo = (ph) => {
     if (ph < 6.5) return { status: "Acidic - Unsafe", color: "red", message: "Corrosive. Not safe for skin contact." };
     if (ph > 8.5) return { status: "Alkaline - Unsafe", color: "red", message: "Hard/Basic. May cause skin irritation." };
@@ -204,25 +215,50 @@ function App() {
       )}
 
       <main className="grid">
-        {/* Card 1: Main Valve Control */}
+        {/* Card 1: System Controls (Valve & Pump) */}
         <div className="card">
-          <h2>Main Supply Valve</h2>
-          <p>Status: <span style={{ fontWeight: 'bold', color: controls.valveOpen ? '#10b981' : '#ef4444' }}>
-            {controls.valveOpen ? "OPEN (Flowing)" : "CLOSED (Shut Off)"}
+          <h2>System Controls</h2>
+          <p>Main Valve: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
+            {dashboardData.controls.valveOpen ? "OPEN" : "CLOSED"}
           </span></p>
           
-          <div className="switch-container">
+          <div className="switch-container" style={{ marginBottom: '20px' }}>
             <span style={{ color: '#64748b', fontWeight: 'bold' }}>OFF</span>
             <label className="switch">
               <input 
                 type="checkbox" 
-                checked={controls.valveOpen} 
+                checked={dashboardData.controls.valveOpen} 
                 onChange={toggleValve} 
               />
               <span className="slider"></span>
             </label>
             <span style={{ color: '#64748b', fontWeight: 'bold' }}>ON</span>
           </div>
+
+          {/* Divider Line */}
+          <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '15px 0' }} />
+
+          <p>Motor Pump: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
+            {dashboardData.controls.pumpStatus === "ON" ? "RUNNING (Refilling)" : "IDLE (Off)"}
+          </span></p>
+
+          <button 
+            onClick={togglePump}
+            style={{ 
+              marginTop: '10px', 
+              width: '100%', 
+              backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', 
+              color: 'white', 
+              padding: '12px', 
+              borderRadius: '8px', 
+              border: 'none', 
+              fontWeight: 'bold', 
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            {dashboardData.controls.pumpStatus === "ON" ? "Turn Pump OFF" : "Force Refill Now"}
+          </button>
         </div>
 
         {/* Card 2: Tank Level */}
