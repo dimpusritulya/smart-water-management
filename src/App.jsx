@@ -30,6 +30,13 @@ function App() {
     sensorData: { flowRate: 0, phLevel: 7.0, tankLevel: 0 },
     alerts: { leakDetected: false }
   });
+
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
   
   const [weatherAlert, setWeatherAlert] = useState("");
   // New state to track if we should show the location explanation banner
@@ -171,18 +178,40 @@ function App() {
 
   // IF LOGGED IN, SHOW DASHBOARD
   return (
-    <div className="dashboard-container">
+    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ textAlign: 'left' }}>
-          <h1>Smart Water Dashboard</h1>
-          <p>Monitoring: Apartment 101</p>
-        </div>
-        <button 
-          onClick={() => signOut(auth)}
-          style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+  <div>
+    <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#1e293b' }}>
+      Smart Water Dashboard
+    </h1>
+    <p style={{ margin: 0, color: '#64748b', textTransform: 'uppercase', fontSize: '0.9rem' }}>
+      Monitoring: Apartment 101
+    </p>
+  </div>
+  
+  <div style={{ display: 'flex', gap: '15px' }}>
+    {/* NEW: Dark Mode Toggle Button */}
+    <button 
+      onClick={toggleTheme}
+      style={{
+        padding: '8px 16px',
+        borderRadius: '8px',
+        border: 'none',
+        backgroundColor: isDarkMode ? '#334155' : '#e2e8f0',
+        color: isDarkMode ? '#f8fafc' : '#1e293b',
+        cursor: 'pointer',
+        fontWeight: 'bold',
+        transition: 'all 0.3s'
+      }}
+    >
+      {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+    </button>
+    
+    {/* Your existing Logout Button */}
+    <button style={{ /* ... your existing styles ... */ }}>Logout</button>
+  </div>
+</div>
       </header>
 
       {/* --- NEW: The Soft Prompt Location Banner --- */}

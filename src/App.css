@@ -41,6 +41,7 @@ body {
   margin: 0 0 10px 0;
   background: linear-gradient(90deg, #1e293b, #3b82f6);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -186,4 +187,27 @@ table th {
 table tr:hover td {
   background-color: #f8fafc;
   transition: background-color 0.2s;
+}
+
+
+
+/* --- DARK MODE OVERRIDES --- */
+
+/* Changes the main background of the whole app */
+.app-container.dark-mode {
+  background-color: #0f172a; /* Deep dark blue/gray */
+  color: #f8fafc; /* Very light gray/white text */
+  min-height: 100vh;
+}
+
+/* Changes the background of the individual white cards */
+.app-container.dark-mode .card {
+  background-color: #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+  border-color: #334155;
+}
+
+/* Ensure any secondary gray text stays readable */
+.app-container.dark-mode p {
+  color: #cbd5e1 !important; 
 }
