@@ -8,7 +8,6 @@ import './App.css';
 
 export default function App() {
 
-  export default function App() {
   // --- AUTHENTICATION STATE ---
   const [user, setUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -21,7 +20,7 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
-
+  
   
   // 1. Navigation State
   const [activeTab, setActiveTab] = useState('controls'); // 'controls', 'sensors', 'analytics', 'profile'
@@ -115,11 +114,7 @@ export default function App() {
     return <Login />;
   }
 
-  // If we made it past the bouncer, render the full Dashboard:
-  return (
-    <div className="app-container" style={{ paddingBottom: '80px' }}>
-      {/* ... your entire dashboard UI ... */}
-      
+  // Your actual working dashboard code starts here:
 
   return (
     <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
