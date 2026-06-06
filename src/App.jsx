@@ -87,6 +87,26 @@ export default function App() {
       {/* --- TAB CONTENT RENDERING --- */}
       <main style={{ padding: '0 10px' }}>
 
+        {/* 🛠️ TEMPORARY DEVELOPER SIMULATOR */}
+      <div style={{ padding: '16px', background: '#f8fafc', border: '2px dashed #94a3b8', borderRadius: '8px', marginBottom: '20px', margin: '0 10px' }}>
+        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#475569' }}>🛠️ Test Simulator: Override Hardware</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <label style={{ fontWeight: 'bold' }}>Simulate Tank Level:</label>
+          <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{dashboardData.sensorData.tankLevel}%</span>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={dashboardData.sensorData.tankLevel} 
+          onChange={(e) => setDashboardData(prev => ({
+            ...prev,
+            sensorData: { ...prev.sensorData, tankLevel: parseInt(e.target.value) }
+          }))}
+          style={{ width: '100%', marginTop: '10px', cursor: 'pointer' }}
+        />
+      </div>
+
         {/* TAB 1: CONTROLS */}
         {activeTab === 'controls' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
