@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebaseConfig"; // This links your specific database keys!
-import { ref, get } from "firebase/database";
+import { ref, update, onValue } from "firebase/database";
 import { db } from "./firebaseConfig";
 import Login from "./components/Login";
 import SignupPage from './components/SignupPage';
@@ -17,27 +17,85 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(true); 
 
 
-  // --- THE UPGRADED BOUNCER (Auth Guard & Data Fetcher) ---
+  // --- THE UPGRADED BOUNCER (Auth Guard & Live Data Listeners) ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser); 
       
       if (currentUser) {
-        // The user logged in! Let's fetch their specific profile data.
+        // 1. Listen for Profile Data
         const profileRef = ref(db, 'users/' + currentUser.uid + '/profile');
-        const snapshot = await get(profileRef);
+        onValue(profileRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setProfileData(snapshot.val());        
+          } else {
+            setProfileData({ name: "Loading...", apartment: "...", tankCapacity: "...", plumberContact: "Not provided yet", buildingManager: "Not provided yet" });
+          }
+        });
+
+        // 2. Listen for Reminders Data & Calculate Due Dates!
+        const remindersRef = ref(db, 'users/' + currentUser.uid + '/reminders');
+        onValue(remindersRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            const today = new Date();
+
+            // Process the raw database dates into actionable UI items
+            const processedReminders = Object.keys(data).map(key => {
+              const item = data[key];
+              const lastDate = new Date(item.lastCompletedDate);
+              
+              // Calculate how many days have passed
+              const daysPassed = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+              const daysRemaining = item.frequencyInDays - daysPassed;
+              const isOverdue = daysRemaining < 0;
+
+              // SMART FILTER: ONLY show on dashboard if due within 14 days OR overdue
+              if (daysRemaining <= 14) {
+                return {
+                  id: key,
+                  title: item.title,
+                  desc: isOverdue ? `OVERDUE by ${Math.abs(daysRemaining)} days` : `Due in ${daysRemaining} days`,
+                  overdue: isOverdue,
+                  completed: false
+                };
+              }
+              return null; // If it's not due soon, keep it hidden!
+            }).filter(Boolean); // Remove the hidden ones from the array
+
+            setReminders(processedReminders);
+          } else {
+            // SEED DEFAULT REMINDERS for brand new accounts!
+            // We set the lastCompletedDate intentionally far back so they show up for testing
+            const initialReminders = {
+              "task_tank": { title: "Overhead Tank Deep Cleaning", frequencyInDays: 180, lastCompletedDate: "2025-11-01T00:00:00Z" },
+              "task_filter": { title: "Water Filter Recalibration", frequencyInDays: 90, lastCompletedDate: "2026-03-01T00:00:00Z" }
+            };
+            update(ref(db, 'users/' + currentUser.uid + '/reminders'), initialReminders);
+          }
+        });
+
+        // 3. Listen for Live Dashboard Data (Sensors, Controls, Alerts)
+        const dashboardRef = ref(db, 'users/' + currentUser.uid);
+        onValue(dashboardRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            
+            // Overwrite the hardcoded state with live database values
+            setDashboardData({
+              controls: data.controls || { valveOpen: false, pumpStatus: "OFF" },
+              sensorData: data.sensorData || { flowRate: 0, phLevel: 7.2, tankLevel: 0 },
+              alerts: data.alerts || { leakDetected: false, leakSeverity: 'Low' }
+            });
+          }
+        });
         
-        if (snapshot.exists()) {
-          // Overwrite the hardcoded state with their real database info!
-          setProfileData(snapshot.val());
-        } else {
-          console.log("No profile data found in database for this user.");
-        }
       }
       
-      setIsCheckingAuth(false); // Stop the loading screen
+      setIsCheckingAuth(false);
     });
-    return () => unsubscribe();
+    
+    return () => unsubscribeAuth();
   }, []);
   
   
@@ -53,11 +111,11 @@ export default function App() {
 
   // 3. User Profile Data
   const [profileData, setProfileData] = useState({
-    name: "Uppalapati Dimpu Sritulya",
-    apartment: "101",
-    tankCapacity: "500",
-    plumberContact: "98765 43210",
-    buildingManager: "98765 11111"
+    name: "",
+    apartment: "",
+    tankCapacity: "",
+    plumberContact: "",
+    buildingManager: ""
   });
 
   // NEW: State to track if we are in "Edit Mode"
@@ -94,11 +152,24 @@ export default function App() {
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
+
   // Handles clicking the "Save" button
-  const handleSaveProfile = () => {
-    // TODO: We will add the Firebase push code here in the next step!
-    console.log("Saving new profile data to database:", profileData);
-    setIsEditingProfile(false); // Turn off edit mode
+  const handleSaveProfile = async () => {
+    if (!user) return; // Safety check
+    
+    try {
+      // Points exactly to this specific logged-in user
+      const profileRef = ref(db, 'users/' + user.uid + '/profile'); 
+      
+      // Updates Firebase with whatever is currently in your input boxes
+      await update(profileRef, profileData); 
+      
+      setIsEditingProfile(false); // Turn off edit mode
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile in Firebase:", error);
+      alert("Failed to save profile updates.");
+    }
   };
 
 
@@ -122,6 +193,26 @@ export default function App() {
       // NOTE: In the live version, you will also send the "OFF" command to Firebase right here!
     }
   }, [dashboardData.sensorData.tankLevel, dashboardData.controls.pumpStatus]);
+
+  // --- REMINDERS STATE & LOGIC ---
+  const [reminders, setReminders] = useState([]); // Starts empty, Firebase fills it!
+
+  const toggleReminder = (id) => {
+    // 1. Instantly check it off on the screen for that satisfying UI animation
+    setReminders(prev => prev.map(rem => 
+      rem.id === id ? { ...rem, completed: true } : rem
+    ));
+
+    // 2. Wait 600ms, then tell Firebase you completed it RIGHT NOW
+    setTimeout(async () => {
+      if (user) {
+        const taskRef = ref(db, `users/${user.uid}/reminders/${id}`);
+        await update(taskRef, {
+          lastCompletedDate: new Date().toISOString() // Saves the exact current date/time!
+        });
+      }
+    }, 600);
+  };
 
 
   // --- WEATHER & LOCATION STATES ---
@@ -162,14 +253,22 @@ export default function App() {
         // data.list[0] is the exact forecast for the next 3-hour window
         const nextForecast = data.list[0];
         const weatherCode = nextForecast.weather[0].id; 
-        
-        // OpenWeather Codes: 2xx (Storms), 5xx (Rain), 80x (Clouds)
-        if (weatherCode >= 200 && weatherCode < 600) {
-          setWeatherAlert("🌧️ Rain or storms forecasted in the next 3 hours. Consider delaying manual pump refills to maximize rainwater harvesting.");
-        } else if (weatherCode >= 801 && weatherCode <= 804) {
-          setWeatherAlert("☁️ Heavy clouds forecasted in the next 3 hours. Consider refilling your tank now to avoid power-cut-related water shortages.");
+        const windSpeed = nextForecast.wind.speed; // Speed in meters/second
+
+        // Define strict thresholds
+        const isThunderstorm = (weatherCode >= 200 && weatherCode <= 232);
+        const isHeavyRain = [501, 502, 503, 504, 522, 531].includes(weatherCode);
+        const isHighWind = windSpeed >= 10; // 11 m/s is roughly 40 km/h (fresh to strong gale breeze)
+
+        if (isThunderstorm) {
+          setWeatherAlert("⚡ Thunderstorms forecasted within 3 hours. High risk of lightning-induced power outages. Consider securing your water supply now.");
+        } else if (isHeavyRain) {
+          setWeatherAlert("🌧️ Torrential rain forecasted within 3 hours. Structural grid risks detected. Ensure your storage tank is sufficiently filled.");
+        } else if (isHighWind) {
+          setWeatherAlert(`💨 Severe wind gusts forecasted (${Math.round(windSpeed * 3.6)} km/h). High risk of falling branches on power lines. Pre-filling tank recommended.`);
         } else {
-          setWeatherAlert(null); // Clear skies, hide the banner
+          // Normal weather, light rain, or regular clouds will pass through SILENTLY
+          setWeatherAlert(null); 
         }
       } catch (err) {
         console.error("Failed to fetch forecast.", err);
@@ -242,7 +341,7 @@ export default function App() {
           </p>
         </div>
       )}
-      
+
 
       {/* NEW: Smart Leak Alert */}
       {dashboardData.alerts.leakDetected && (
@@ -297,8 +396,76 @@ export default function App() {
                 {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
               </button>
             </div>
-          </div>
+
+            {/* CARD 3: MAINTENANCE REMINDERS */}
+            <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>Maintenance Reminders</h2>
+                
+                {/* Only show the Action Required tag if something is actually overdue and not completed */}
+                {reminders.some(r => r.overdue && !r.completed) && (
+                  <span style={{ background: '#fef3c7', color: '#d97706', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    Action Required
+                  </span>
+                )}
+              </div>
+
+              {/* Conditional Rendering: Empty State vs The List */}
+              {reminders.length === 0 ? (
+                
+                <div style={{ textAlign: 'center', padding: '40px 0', animation: 'fadeIn 0.5s ease-in' }}>
+                  <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>✨</span>
+                  <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#475569' }}>You're all caught up!</p>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', marginTop: '4px' }}>No reminders currently.</p>
+                </div>
+
+              ) : (
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {reminders.map((reminder) => (
+                    <li key={reminder.id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', opacity: reminder.completed ? 0 : 1, transition: 'all 0.5s ease-out' }}>
+                      
+                      {/* The Custom Circular Checkbox */}
+                      <div 
+                        onClick={() => toggleReminder(reminder.id)}
+                        style={{ 
+                          width: '22px', height: '22px', borderRadius: '50%', 
+                          border: reminder.completed ? 'none' : '2px solid #cbd5e1', 
+                          backgroundColor: reminder.completed ? '#3b82f6' : 'transparent',
+                          display: 'flex', justifyContent: 'center', alignItems: 'center', 
+                          cursor: 'pointer', marginTop: '2px', flexShrink: 0,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {reminder.completed && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Text Details */}
+                      <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleReminder(reminder.id)}>
+                        <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: reminder.completed ? '500' : '600', color: reminder.completed ? '#94a3b8' : '#1e293b', textDecoration: reminder.completed ? 'line-through' : 'none', transition: 'all 0.2s' }}>
+                          {reminder.title}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: reminder.completed ? '#94a3b8' : (reminder.overdue ? '#ef4444' : '#64748b'), fontWeight: (!reminder.completed && reminder.overdue) ? 'bold' : 'normal', marginTop: '4px', transition: 'color 0.2s' }}>
+                          {reminder.desc}
+                        </p>
+                      </div>
+
+                    </li>
+                  ))}
+                </ul>
+                
+              )}
+            </div>
+
+          </div> 
         )}
+        
 
         {/* TAB 2: SENSORS */}
         {activeTab === 'sensors' && (
@@ -350,11 +517,13 @@ export default function App() {
             <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               
               {/* Header with Edit/Save Button */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', width: '100%' }}>
+                
                 <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>Resident Profile</h2>
+                
                 <button 
                   onClick={isEditingProfile ? handleSaveProfile : () => setIsEditingProfile(true)}
-                  style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: isEditingProfile ? '#10b981' : '#f1f5f9', color: isEditingProfile ? 'white' : '#334155' }}
+                  style={{ position: 'absolute', right: 0, padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: isEditingProfile ? '#10b981' : '#f1f5f9', color: isEditingProfile ? 'white' : '#334155' }}
                 >
                   {isEditingProfile ? 'Save Changes' : 'Edit Profile'}
                 </button>
