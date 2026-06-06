@@ -1,371 +1,224 @@
-import { auth } from './firebaseConfig';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import Login from './components/Login';
-import Signup from './components/SignupPage'; 
-import { useState, useEffect } from 'react';
-import { database } from './firebaseConfig';
-import { ref, onValue, set } from 'firebase/database';
-import { FaWater, FaTint, FaTachometerAlt, FaExclamationTriangle, FaCloudShowersHeavy, FaMapMarkerAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
 import UsageGraph from './components/UsageGraph';
-import RemindersPanel from './components/RemindersPanel';
 import AlertHistory from './components/AlertHistory';
 import './App.css';
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [isLoginView, setIsLoginView] = useState(true);
+export default function App() {
+  // 1. Navigation State
+  const [activeTab, setActiveTab] = useState('controls'); // 'controls', 'sensors', 'analytics', 'profile'
 
-  // Monitor login status
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  
-  
+  // 2. Main Dashboard Data (Added leak severity)
   const [dashboardData, setDashboardData] = useState({
     controls: { valveOpen: true, pumpStatus: "OFF" },
-    sensorData: { flowRate: 0, phLevel: 7.0, tankLevel: 0 },
-    alerts: { leakDetected: false }
+    sensorData: { flowRate: 0, phLevel: 7.2, tankLevel: 85 },
+    alerts: { leakDetected: true, leakSeverity: 'High' } // Set to true to see the new alert UI!
   });
-  
-  const [weatherAlert, setWeatherAlert] = useState("");
-  // New state to track if we should show the location explanation banner
-  const [locationStatus, setLocationStatus] = useState("idle");
 
-// 1. Listen for Firebase Data dynamically based on logged-in user
-  useEffect(() => {
-    // Safety check: If no one is logged in yet, don't try to fetch data
-    if (!user) return; 
+  // 3. User Profile Data
+  const [profileData, setProfileData] = useState({
+    name: "Uppalapati Dimpu Sritulya",
+    apartment: "101",
+    tankCapacity: "500 Liters",
+    plumberContact: "98765 43210",
+    buildingManager: "98765 11111"
+  });
 
-    // Look at the specific folder for THIS logged-in user
-    const userRef = ref(database, `users/${user.uid}`);
-    
-    const unsubscribe = onValue(userRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setDashboardData(prevState => ({ ...prevState, ...data }));
-      }
-    });
-    
-    return () => unsubscribe();
-  }, [user]); // <-- Adding 'user' here tells React to run this again if a different person logs in
-
-  // 2. Weather Fetch Logic (Upgraded for Probability and Wind)
-  const fetchWeather = async (lat, lon) => {
-    try {
-      const apiKey = '80ec7cdea5572775cae90e17cefee865'; 
-      // ADDED: &units=metric to easily calculate wind speeds
-      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      const cityName = data.city.name;
-      const forecast = data.list[0]; // The next 3-hour window
-      
-      const upcomingCondition = forecast.weather[0].main; 
-      // 'pop' is a decimal (0 to 1), multiply by 100 to get a clean percentage
-      const rainProbability = Math.round(forecast.pop * 100); 
-      // Wind speed in m/s (10 m/s is roughly 36 km/h, enough to cause issues)
-      const windSpeed = forecast.wind.speed; 
-
-      // Thresholds: Only alert if it's ACTUALLY highly likely to happen
-      const MIN_RAIN_PROBABILITY = 60; // Require at least a 60% chance of rain
-      const HIGH_WIND_THRESHOLD = 10; // Require wind speeds over 10 m/s
-
-      let newAlert = "";
-
-      // 1. Check for High Winds FIRST (biggest cause of power cuts)
-      if (windSpeed >= HIGH_WIND_THRESHOLD) {
-        newAlert = `High Wind Warning for ${cityName} (${Math.round(windSpeed * 3.6)} km/h expected). Refill your tank now to prepare for wind-induced power cuts.`;
-      }
-      // 2. Check for Reliable Storms/Rain SECOND
-      else if ((upcomingCondition === "Rain" || upcomingCondition === "Thunderstorm") && rainProbability >= MIN_RAIN_PROBABILITY) {
-        newAlert = `Approaching Storm Alert for ${cityName} (${rainProbability}% chance of rain). Refill your tank now to prepare for potential power cuts.`;
-      }
-      // 3. Clear the alert if the weather is fine
-      else {
-        newAlert = "";
-      }
-
-      setWeatherAlert(newAlert);
-    } catch (error) {
-      console.error("Could not fetch weather forecast", error);
-    }
-  };
-
-  // 3. The "Soft Prompt" Function triggered by the user
-  const requestLocation = () => {
-    setLocationStatus("asking");
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocationStatus("granted");
-          fetchWeather(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.error("User denied location access.", error);
-          setLocationStatus("denied");
-          // Fallback to a default location if they deny
-          fetchWeather(16.5062, 80.6480); 
-        }
-      );
-    }
-  };
-
-  // 4. Automatically check if they already granted permission in a previous session
-  useEffect(() => {
-    if ("permissions" in navigator) {
-      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-        if (result.state === 'granted') {
-          requestLocation();
-        }
-      });
-    }
-  }, []);
-
+  // 4. Helper Functions
   const toggleValve = () => {
-    if (!user) return; // Safety check
-    
-    const valveRef = ref(database, `users/${user.uid}/controls/valveOpen`);
-    set(valveRef, !dashboardData.controls.valveOpen);
+    setDashboardData(prev => ({
+      ...prev,
+      controls: { ...prev.controls, valveOpen: !prev.controls.valveOpen }
+    }));
   };
 
   const togglePump = () => {
-    if (!user) return; // Safety check
-    
-    // Read the current state from dashboardData and flip it
-    const newStatus = dashboardData.controls.pumpStatus === "ON" ? "OFF" : "ON";
-    
-    // Send the new status to Firebase
-    const pumpRef = ref(database, `users/${user.uid}/controls/pumpStatus`);
-    set(pumpRef, newStatus);
+    setDashboardData(prev => ({
+      ...prev,
+      controls: { ...prev.controls, pumpStatus: prev.controls.pumpStatus === "ON" ? "OFF" : "ON" }
+    }));
   };
 
-  const getWaterQualityInfo = (ph) => {
-    if (ph < 6.5) return { status: "Acidic - Unsafe", color: "red", message: "Corrosive. Not safe for skin contact." };
-    if (ph > 8.5) return { status: "Alkaline - Unsafe", color: "red", message: "Hard/Basic. May cause skin irritation." };
-    return { status: "Safe & Neutral", color: "green", message: "Water is safe for household use." };
-  };
-
-  const { controls, sensorData, alerts } = dashboardData;
-  const quality = getWaterQualityInfo(sensorData.phLevel);
-
-  // 3. Weekly Usage Math (Paste this right above your 'return' statement!)
   const weeklyData = [120, 135, 100, 150, 90, 150, 160];
   const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
 
-
-  // IF NOT LOGGED IN, SHOW LOGIN OR SIGNUP PAGE
-  if (!user) {
-    return isLoginView ? (
-      <Login onSwitchView={() => setIsLoginView(false)} />
-    ) : (
-      <Signup onSwitchView={() => setIsLoginView(true)} />
-    );
-  }
-
-  // IF LOGGED IN, SHOW DASHBOARD
   return (
-    <div className="dashboard-container">
-      <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ textAlign: 'left' }}>
-          <h1>Smart Water Dashboard</h1>
-          <p>Monitoring: Apartment 101</p>
+    <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px', boxSizing: 'border-box', marginBottom: '20px', marginTop: '20px' }}>
+        <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
+          <h1 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>Smart Water Dashboard</h1>
+          <p style={{ margin: 0, color: '#64748b', textTransform: 'uppercase', fontSize: '0.9rem' }}>Monitoring: Apartment {profileData.apartment}</p>
         </div>
-        <button 
-          onClick={() => signOut(auth)}
-          style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          Logout
-        </button>
-      </header>
+      </div>
 
-      {/* --- NEW: The Soft Prompt Location Banner --- */}
-      {locationStatus === "idle" && (
-        <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '20px', borderRadius: '12px', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FaMapMarkerAlt size={24} color="#22c55e" />
-            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Enable Smart Weather Alerts</h3>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.95rem', color: '#15803d', lineHeight: '1.5' }}>
-            To accurately predict approaching storms in your area and warn you to refill your tank <strong>before</strong> wind-induced power cuts occur, this dashboard requires your location.
+      {/* NEW: Smart Leak Alert */}
+      {dashboardData.alerts.leakDetected && (
+        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', marginBottom: '24px', margin: '0 10px' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
+            ⚠️ WARNING: Potential Pipeline Leak!
+          </h3>
+          <p style={{ margin: 0, color: '#991b1b', fontSize: '0.95rem' }}>
+            {dashboardData.alerts.leakSeverity === 'High' 
+              ? `Severe continuous flow detected while valves are closed. Suggestion: Shut off the main valve immediately and call your plumber (${profileData.plumberContact}).`
+              : "Minor pressure drop detected. Please inspect visible pipes for dripping."}
           </p>
-          <button 
-            onClick={requestLocation} 
-            style={{ backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content', transition: '0.2s' }}
-          >
-            Allow Location Access
-          </button>
         </div>
       )}
 
-      {/* Emergency Leak Alert */}
-      {alerts.leakDetected && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
-          <FaExclamationTriangle style={{ marginRight: '10px' }} />
-          WARNING: Potential water leak detected in your pipeline!
-        </div>
-      )}
+      {/* --- TAB CONTENT RENDERING --- */}
+      <main style={{ padding: '0 10px' }}>
 
-      {/* Weather Predictive Alert */}
-      {weatherAlert && (
-        <div className="alert-banner" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
-          <FaCloudShowersHeavy style={{ marginRight: '10px' }} />
-          {weatherAlert}
-        </div>
-      )}
+        {/* TAB 1: CONTROLS */}
+        {activeTab === 'controls' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
+              <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
+                Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
+                  {dashboardData.controls.valveOpen ? "OPEN (Flowing)" : "CLOSED (Shut Off)"}
+                </span>
+              </p>
+              <div className="switch-container">
+                <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
+                <label className="switch">
+                  <input type="checkbox" checked={dashboardData.controls.valveOpen} onChange={toggleValve} />
+                  <span className="slider"></span>
+                </label>
+                <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
+              </div>
+            </div>
 
-      <main className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '30px' }}>
-          
-          {/* Card 1: Main Supply Valve Control */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
-            <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
-              Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
-                {dashboardData.controls.valveOpen ? "OPEN (Water Flowing)" : "CLOSED (Shut Off)"}
-              </span>
-            </p>
-            
-            <div className="switch-container">
-              <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
-              <label className="switch">
-                <input 
-                  type="checkbox" 
-                  checked={dashboardData.controls.valveOpen} 
-                  onChange={toggleValve} 
-                />
-                <span className="slider"></span>
-              </label>
-              <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
+              <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>Turn your overhead water pump on or off remotely.</p>
+              <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
+                Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
+                  {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
+                </span>
+              </p>
+              <button 
+                onClick={togglePump}
+                style={{ width: '100%', backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', color: 'white', padding: '16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}
+              >
+                {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
+              </button>
             </div>
           </div>
+        )}
 
-          {/* Card 2: Quick Refill Panel */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none', transition: 'all 0.3s' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>
-              Turn your overhead water pump on or off remotely.
-            </p>
-            
-            <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
-              Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
-                {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
-              </span>
-            </p>
-
-            <button 
-              onClick={togglePump}
-              style={{ 
-                width: '100%', 
-                backgroundColor: dashboardData.controls.pumpStatus === "ON" ? '#ef4444' : '#3b82f6', 
-                color: 'white', 
-                padding: '16px', 
-                borderRadius: '8px', 
-                border: 'none', 
-                fontWeight: 'bold', 
-                fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)',
-                transition: 'background-color 0.2s, transform 0.1s'
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              {dashboardData.controls.pumpStatus === "ON" ? "Stop Refilling" : "Start Refilling"}
-            </button>
-          </div>
-
-          {/* Card 3: Tank Level */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Tank Level</h2>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>
-              {dashboardData.sensorData.tankLevel}%
+        {/* TAB 2: SENSORS */}
+        {activeTab === 'sensors' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Tank Level</h2>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>{dashboardData.sensorData.tankLevel}%</div>
+              <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
+                <div style={{ width: `${dashboardData.sensorData.tankLevel}%`, backgroundColor: '#3b82f6', height: '100%' }}></div>
+              </div>
             </div>
-            <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
-              <div style={{ 
-                width: `${dashboardData.sensorData.tankLevel}%`, 
-                backgroundColor: '#3b82f6', 
-                height: '100%', 
-                backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
-                backgroundSize: '1rem 1rem',
-                transition: 'width 0.5s ease-in-out'
-              }}></div>
+
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Water Quality</h2>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px' }}>pH: {dashboardData.sensorData.phLevel}</div>
+              <div style={{ fontWeight: 'bold', color: '#10b981', marginBottom: '10px' }}>Safe & Neutral</div>
+            </div>
+
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
+              <div style={{ marginTop: '10px' }}>
+                <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0ea5e9' }}>{dashboardData.sensorData.flowRate}</span>
+                <span style={{ fontSize: '1.2rem', color: '#64748b', marginLeft: '5px' }}>L/min</span>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Card 4: Water Quality */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Water Quality</h2>
-            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px' }}>
-              pH: {dashboardData.sensorData.phLevel}
+        {/* TAB 3: ANALYTICS */}
+        {activeTab === 'analytics' && (
+          <div style={{ display: 'grid', gap: '20px' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>Weekly Water Usage</h2>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Estimated Total</p>
+                  <h2 style={{ margin: 0, color: '#3b82f6' }}>{calculatedTotal.toLocaleString()} <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span></h2>
+                </div>
+              </div>
+              <UsageGraph />
             </div>
-            <div style={{ fontWeight: 'bold', color: dashboardData.sensorData.phLevel >= 6.5 && dashboardData.sensorData.phLevel <= 8.5 ? '#10b981' : '#ef4444', marginBottom: '10px' }}>
-              {dashboardData.sensorData.phLevel >= 6.5 && dashboardData.sensorData.phLevel <= 8.5 ? 'Safe & Neutral' : 'Needs Attention'}
-            </div>
-            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Water is safe for household use.</p>
+            <AlertHistory />
           </div>
+        )}
 
-          {/* Card 5: Live Flow Rate */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>Current speed of water moving through the pipe.</p>
-            
-            <div style={{ marginTop: '10px' }}>
-              <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0ea5e9' }}>
-                {dashboardData.sensorData.flowRate}
-              </span>
-              <span style={{ fontSize: '1.2rem', color: '#64748b', marginLeft: '5px' }}>L/min</span>
-            </div>
-            <p style={{ marginTop: '15px', fontSize: '0.9rem', color: dashboardData.sensorData.flowRate > 0 ? '#10b981' : '#64748b', fontWeight: 'bold' }}>
-              {dashboardData.sensorData.flowRate > 0 ? "● Water is Flowing" : "○ No Flow Detected"}
-            </p>
-          </div>
+        {/* TAB 4: PROFILE */}
+        {activeTab === 'profile' && (
+          <div style={{ display: 'grid', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginRight: '15px' }}>
+                  {profileData.name.charAt(0)}
+                </div>
+                <div>
+                  <h2 style={{ margin: '0 0 5px 0', fontSize: '1.5rem', color: '#1e293b' }}>{profileData.name}</h2>
+                  <p style={{ margin: 0, color: '#64748b' }}>Resident • Apartment {profileData.apartment}</p>
+                </div>
+              </div>
+              
+              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '20px 0' }} />
+              
+              <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '15px' }}>System Info</h3>
+              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Tank Capacity:</span> <strong>{profileData.tankCapacity}</strong></p>
+              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>ESP32 Status:</span> <strong style={{ color: '#10b981' }}>Online</strong></p>
 
-          {/* Card 6: Hardware Status */}
-          <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Hardware Status</h2>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>ESP32 Microcontroller connection to cloud.</p>
-            
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '10px' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#10b981', marginRight: '10px', boxShadow: '0 0 12px #10b981' }}></div>
-              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b' }}>ONLINE</span>
-            </div>
-            <p style={{ marginTop: '15px', fontSize: '0.9rem', color: '#64748b' }}>
-              Latency: ~45ms (Secure)
-            </p>
-          </div>
+              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '20px 0' }} />
 
-        {/* --- REMINDERS PANEL --- */}
-        <RemindersPanel />
+              <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '15px' }}>Emergency Contacts</h3>
+              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Plumber:</span> <strong>{profileData.plumberContact}</strong></p>
+              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Building Manager:</span> <strong>{profileData.buildingManager}</strong></p>
 
-        {/* Full-Width Section: Weekly Water Usage */}
-        <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>
-              Weekly Water Usage
-            </h2>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Estimated Total This Week</p>
-              <h2 style={{ margin: 0, color: '#3b82f6' }}>
-                {calculatedTotal.toLocaleString()} <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span>
-              </h2>
+              <button style={{ width: '100%', marginTop: '20px', padding: '12px', borderRadius: '8px', border: '1px solid #ef4444', backgroundColor: 'transparent', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>
+                Sign Out
+              </button>
             </div>
           </div>
-          
-          {/* NEW: Replaced FlowGraph with UsageGraph */}
-          <UsageGraph />
-        </div>
-
-        {/* System Alert History */}
-        <AlertHistory />
+        )}
 
       </main>
+
+      {/* --- BOTTOM NAVIGATION BAR --- */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        backgroundColor: '#ffffff',
+        borderTop: '1px solid #e2e8f0',
+        display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+        padding: '12px 10px',
+        boxShadow: '0 -4px 6px -1px rgb(0 0 0 / 0.05)',
+        zIndex: 1000
+      }}>
+        {['controls', 'sensors', 'analytics', 'profile'].map((tab) => (
+          <button 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              color: activeTab === tab ? '#3b82f6' : '#94a3b8',
+              fontWeight: activeTab === tab ? 'bold' : 'normal',
+              transition: 'color 0.2s'
+            }}
+          >
+            <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>
+              {tab === 'controls' && '🎛️'}
+              {tab === 'sensors' && '💧'}
+              {tab === 'analytics' && '📈'}
+              {tab === 'profile' && '👤'}
+            </span>
+            <span style={{ fontSize: '0.75rem', textTransform: 'capitalize' }}>{tab}</span>
+          </button>
+        ))}
+      </div>
+
     </div>
   );
 }
-
-export default App;
