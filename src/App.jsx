@@ -1,3 +1,4 @@
+import { getAuth, signOut } from "firebase/auth";
 import React, { useState } from 'react';
 import UsageGraph from './components/UsageGraph';
 import AlertHistory from './components/AlertHistory';
@@ -18,10 +19,25 @@ export default function App() {
   const [profileData, setProfileData] = useState({
     name: "Uppalapati Dimpu Sritulya",
     apartment: "101",
-    tankCapacity: "500 Liters",
+    tankCapacity: "500",
     plumberContact: "98765 43210",
     buildingManager: "98765 11111"
   });
+
+  // NEW: State to track if we are in "Edit Mode"
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+
+  const handleLogout = () => {
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      console.log("User successfully signed out.");
+      // If your app is set up to watch the auth state, 
+      // this will automatically kick them back to Login.jsx!
+    }).catch((error) => {
+      console.error("Error signing out: ", error);
+    });
+  };
 
   // 4. Helper Functions
   const toggleValve = () => {
@@ -37,6 +53,20 @@ export default function App() {
       controls: { ...prev.controls, pumpStatus: prev.controls.pumpStatus === "ON" ? "OFF" : "ON" }
     }));
   };
+
+  // Handles typing in the profile inputs
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handles clicking the "Save" button
+  const handleSaveProfile = () => {
+    // TODO: We will add the Firebase push code here in the next step!
+    console.log("Saving new profile data to database:", profileData);
+    setIsEditingProfile(false); // Turn off edit mode
+  };
+
 
   const weeklyData = [120, 135, 100, 150, 90, 150, 160];
   const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
@@ -87,25 +117,6 @@ export default function App() {
       {/* --- TAB CONTENT RENDERING --- */}
       <main style={{ padding: '0 10px' }}>
 
-        {/* 🛠️ TEMPORARY DEVELOPER SIMULATOR */}
-      <div style={{ padding: '16px', background: '#f8fafc', border: '2px dashed #94a3b8', borderRadius: '8px', marginBottom: '20px', margin: '0 10px' }}>
-        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#475569' }}>🛠️ Test Simulator: Override Hardware</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <label style={{ fontWeight: 'bold' }}>Simulate Tank Level:</label>
-          <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{dashboardData.sensorData.tankLevel}%</span>
-        </div>
-        <input 
-          type="range" 
-          min="0" 
-          max="100" 
-          value={dashboardData.sensorData.tankLevel} 
-          onChange={(e) => setDashboardData(prev => ({
-            ...prev,
-            sensorData: { ...prev.sensorData, tankLevel: parseInt(e.target.value) }
-          }))}
-          style={{ width: '100%', marginTop: '10px', cursor: 'pointer' }}
-        />
-      </div>
 
         {/* TAB 1: CONTROLS */}
         {activeTab === 'controls' && (
@@ -193,31 +204,82 @@ export default function App() {
         {activeTab === 'profile' && (
           <div style={{ display: 'grid', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
             <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginRight: '15px' }}>
-                  {profileData.name.charAt(0)}
-                </div>
-                <div>
-                  <h2 style={{ margin: '0 0 5px 0', fontSize: '1.5rem', color: '#1e293b' }}>{profileData.name}</h2>
-                  <p style={{ margin: 0, color: '#64748b' }}>Resident • Apartment {profileData.apartment}</p>
-                </div>
+              
+              {/* Header with Edit/Save Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>Resident Profile</h2>
+                <button 
+                  onClick={isEditingProfile ? handleSaveProfile : () => setIsEditingProfile(true)}
+                  style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: isEditingProfile ? '#10b981' : '#f1f5f9', color: isEditingProfile ? 'white' : '#334155' }}
+                >
+                  {isEditingProfile ? 'Save Changes' : 'Edit Profile'}
+                </button>
               </div>
               
-              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '20px 0' }} />
-              
-              <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '15px' }}>System Info</h3>
-              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Tank Capacity:</span> <strong>{profileData.tankCapacity}</strong></p>
-              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>ESP32 Status:</span> <strong style={{ color: '#10b981' }}>Online</strong></p>
+              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', marginBottom: '20px' }} />
 
-              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '20px 0' }} />
+              {/* Dynamic Form / View Area */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                
+                {/* Name */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Full Name:</span>
+                  {isEditingProfile ? (
+                    <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  ) : (
+                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.name}</strong>
+                  )}
+                </div>
 
-              <h3 style={{ fontSize: '1.1rem', color: '#1e293b', marginBottom: '15px' }}>Emergency Contacts</h3>
-              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Plumber:</span> <strong>{profileData.plumberContact}</strong></p>
-              <p style={{ margin: '0 0 10px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#64748b' }}>Building Manager:</span> <strong>{profileData.buildingManager}</strong></p>
+                {/* Apartment */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Apartment No:</span>
+                  {isEditingProfile ? (
+                    <input type="text" name="apartment" value={profileData.apartment} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  ) : (
+                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.apartment}</strong>
+                  )}
+                </div>
 
-              <button style={{ width: '100%', marginTop: '20px', padding: '12px', borderRadius: '8px', border: '1px solid #ef4444', backgroundColor: 'transparent', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>
+                {/* Tank Capacity */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Tank Capacity (L):</span>
+                  {isEditingProfile ? (
+                    <input type="number" name="tankCapacity" value={profileData.tankCapacity} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  ) : (
+                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.tankCapacity} Liters</strong>
+                  )}
+                </div>
+
+                <hr style={{ border: '0', borderTop: '1px dashed #e2e8f0', margin: '10px 0' }} />
+
+                {/* Plumber */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Plumber Contact:</span>
+                  {isEditingProfile ? (
+                    <input type="text" name="plumberContact" value={profileData.plumberContact} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  ) : (
+                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.plumberContact}</strong>
+                  )}
+                </div>
+
+                {/* Building Manager */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Building Manager:</span>
+                  {isEditingProfile ? (
+                    <input type="text" name="buildingManager" value={profileData.buildingManager} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  ) : (
+                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.buildingManager}</strong>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Leave your Sign Out button exactly as it was down here */}
+              <button onClick={handleLogout} style={{ width: '100%', marginTop: '30px', padding: '12px', borderRadius: '8px', border: '1px solid #ef4444', backgroundColor: 'transparent', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>
                 Sign Out
               </button>
+
             </div>
           </div>
         )}
