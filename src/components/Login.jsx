@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { FaWater, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaWater, FaLock, FaEnvelope, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function Login({ onSwitchView })  {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -48,17 +49,30 @@ function Login({ onSwitchView })  {
             />
           </div>
           
+          {/* PASSWORD INPUT WITH EYE TOGGLE */}
           <div style={{ position: 'relative' }}>
             <FaLock style={{ position: 'absolute', top: '14px', left: '15px', color: '#94a3b8' }} />
+            
+            {/* The type dynamically switches based on showPassword state */}
             <input 
-              type="password" 
+              type={showPassword ? "text" : "password"} 
               placeholder="Password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px 15px 12px 45px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontSize: '1rem' }}
+              style={{ width: '100%', padding: '12px 45px 12px 45px', borderRadius: '8px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontSize: '1rem' }}
               required 
             />
+            
+            {/* The Eye Icon Button */}
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', top: '14px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+            >
+              {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+            </button>
           </div>
+          
 
           <button type="submit" style={{ backgroundColor: '#3b82f6', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px', transition: '0.2s' }}>
             Sign In to Dashboard

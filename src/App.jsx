@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { signOut } from "firebase/auth";
+import React, { useState, useEffect } from 'react';
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebaseConfig"; // This links your specific database keys!
+import { ref, get } from "firebase/database";
+import { db } from "./firebaseConfig";
 import Login from "./components/Login";
+import SignupPage from './components/SignupPage';
 import UsageGraph from './components/UsageGraph';
 import AlertHistory from './components/AlertHistory';
 import './App.css';
@@ -11,11 +14,27 @@ export default function App() {
   // --- AUTHENTICATION STATE ---
   const [user, setUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showLogin, setShowLogin] = useState(true); 
 
-  // --- THE BOUNCER (Auth Guard) ---
+
+  // --- THE UPGRADED BOUNCER (Auth Guard & Data Fetcher) ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // Will be 'null' if logged out, or hold user data if logged in
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser); 
+      
+      if (currentUser) {
+        // The user logged in! Let's fetch their specific profile data.
+        const profileRef = ref(db, 'users/' + currentUser.uid + '/profile');
+        const snapshot = await get(profileRef);
+        
+        if (snapshot.exists()) {
+          // Overwrite the hardcoded state with their real database info!
+          setProfileData(snapshot.val());
+        } else {
+          console.log("No profile data found in database for this user.");
+        }
+      }
+      
       setIsCheckingAuth(false); // Stop the loading screen
     });
     return () => unsubscribe();
@@ -109,10 +128,17 @@ export default function App() {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
-  // If no user is logged in, STOP rendering the dashboard and show the Login page instead!
+  // If no user is logged in, toggle between Login and Signup!
   if (!user) {
-    return <Login />;
+    if (showLogin) {
+      // Pass a function to switch to Signup
+      return <Login onSwitchView={() => setShowLogin(false)} />; 
+    } else {
+      // Pass a function to switch back to Login
+      return <SignupPage onSwitchView={() => setShowLogin(true)} />; 
+    }
   }
+
 
   // Your actual working dashboard code starts here:
 
@@ -129,7 +155,7 @@ export default function App() {
 
       {/* NEW: Smart Leak Alert */}
       {dashboardData.alerts.leakDetected && (
-        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', marginBottom: '24px', margin: '0 10px' }}>
+        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', marginBottom: '30px', margin: '0 10px' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
             ⚠️ WARNING: Potential Pipeline Leak!
           </h3>
