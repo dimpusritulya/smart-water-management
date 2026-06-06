@@ -155,7 +155,7 @@ export default function App() {
 
       {/* NEW: Smart Leak Alert */}
       {dashboardData.alerts.leakDetected && (
-        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', marginBottom: '30px', margin: '0 10px' }}>
+        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', margin: '0 10px', marginTop: '20px',marginBottom: '30px'}}>
           <h3 style={{ margin: '0 0 8px 0', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
             ⚠️ WARNING: TESTING VERCEL DEPLOYMENT!!!
           </h3>
