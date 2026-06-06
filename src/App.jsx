@@ -1,11 +1,28 @@
+import React, { useState } from 'react';
 import { signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig"; // This links your specific database keys!
-import React, { useState } from 'react';
+import Login from './Login';
 import UsageGraph from './components/UsageGraph';
 import AlertHistory from './components/AlertHistory';
 import './App.css';
 
 export default function App() {
+
+  export default function App() {
+  // --- AUTHENTICATION STATE ---
+  const [user, setUser] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // --- THE BOUNCER (Auth Guard) ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser); // Will be 'null' if logged out, or hold user data if logged in
+      setIsCheckingAuth(false); // Stop the loading screen
+    });
+    return () => unsubscribe();
+  }, []);
+
+  
   // 1. Navigation State
   const [activeTab, setActiveTab] = useState('controls'); // 'controls', 'sensors', 'analytics', 'profile'
 
@@ -30,10 +47,9 @@ export default function App() {
 
 
   const handleLogout = () => {
-    // Notice we removed the "const auth = getAuth();" line because it's already imported above!
     signOut(auth).then(() => {
       console.log("User successfully signed out.");
-      window.location.reload(); 
+      // We deleted window.location.reload() because React handles it automatically now!
     }).catch((error) => {
       console.error("Error signing out: ", error);
     });
@@ -88,6 +104,22 @@ export default function App() {
       // NOTE: In the live version, you will also send the "OFF" command to Firebase right here!
     }
   }, [dashboardData.sensorData.tankLevel, dashboardData.controls.pumpStatus]);
+
+  // If Firebase is still thinking, show a blank/loading screen
+  if (isCheckingAuth) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
+  }
+
+  // If no user is logged in, STOP rendering the dashboard and show the Login page instead!
+  if (!user) {
+    return <Login />;
+  }
+
+  // If we made it past the bouncer, render the full Dashboard:
+  return (
+    <div className="app-container" style={{ paddingBottom: '80px' }}>
+      {/* ... your entire dashboard UI ... */}
+      
 
   return (
     <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
