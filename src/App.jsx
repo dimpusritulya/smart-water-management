@@ -123,6 +123,65 @@ export default function App() {
     }
   }, [dashboardData.sensorData.tankLevel, dashboardData.controls.pumpStatus]);
 
+
+  // --- WEATHER & LOCATION STATES ---
+  const [weatherAlert, setWeatherAlert] = useState(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+
+  // 1. SMART CHECK: Does the user already trust us?
+  useEffect(() => {
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          fetchLocationAndWeather(); // Already trusted, fetch silently!
+        } else if (result.state === 'prompt') {
+          setShowLocationModal(true); // First time, show the soft popup!
+        }
+      }).catch(() => setShowLocationModal(true));
+    } else {
+      setShowLocationModal(true); // Fallback for older browsers like Safari
+    }
+  }, []);
+
+  // 2. THE FORECAST FETCH LOGIC
+  const fetchLocationAndWeather = () => {
+    setShowLocationModal(false); // Hide the soft popup
+    
+    // This triggers the official browser prompt
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      
+      try {
+        // Securely pulling the key from the .env.local file!
+        const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
+        
+        // Calling the FORECAST endpoint, not the current weather endpoint
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`);
+        const data = await res.json();
+        
+        // data.list[0] is the exact forecast for the next 3-hour window
+        const nextForecast = data.list[0];
+        const weatherCode = nextForecast.weather[0].id; 
+        
+        // OpenWeather Codes: 2xx (Storms), 5xx (Rain), 80x (Clouds)
+        if (weatherCode >= 200 && weatherCode < 600) {
+          setWeatherAlert("🌧️ Rain or storms forecasted in the next 3 hours. Consider delaying manual pump refills to maximize rainwater harvesting.");
+        } else if (weatherCode >= 801 && weatherCode <= 804) {
+          setWeatherAlert("☁️ Heavy clouds forecasted in the next 3 hours. Consider refilling your tank now to avoid power-cut-related water shortages.");
+        } else {
+          setWeatherAlert(null); // Clear skies, hide the banner
+        }
+      } catch (err) {
+        console.error("Failed to fetch forecast.", err);
+      }
+    }, (err) => {
+      console.log("User denied location access.", err);
+      setShowLocationModal(false); // Fails gracefully without breaking the app
+    });
+  };
+
+
+
   // If Firebase is still thinking, show a blank/loading screen
   if (isCheckingAuth) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
@@ -144,7 +203,29 @@ export default function App() {
 
   return (
     <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
-      
+
+    {/* --- SOFT LOCATION POPUP --- */}
+      {showLocationModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: 'white', padding: '30px', borderRadius: '12px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📍</div>
+            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Smart Weather Alerts</h3>
+            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5' }}>
+              We use your location to predict rain and storms up to 3 hours in advance, helping you secure your water supply before potential power cuts.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={() => setShowLocationModal(false)} style={{ padding: '10px 20px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}>
+                Not Now
+              </button>
+              <button onClick={fetchLocationAndWeather} style={{ padding: '10px 20px', border: 'none', background: '#3b82f6', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
+                Allow Location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px', boxSizing: 'border-box', marginBottom: '20px', marginTop: '20px' }}>
         <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
@@ -152,6 +233,16 @@ export default function App() {
           <p style={{ margin: 0, color: '#64748b', textTransform: 'uppercase', fontSize: '0.9rem' }}>Monitoring: Apartment {profileData.apartment}</p>
         </div>
       </div>
+
+      {/* --- DYNAMIC WEATHER ALERT --- */}
+      {weatherAlert && (
+        <div style={{ background: '#e0f2fe', borderLeft: '6px solid #0284c7', padding: '15px', borderRadius: '8px', marginBottom: '30px', display: 'flex', alignItems: 'center' }}>
+          <p style={{ margin: 0, color: '#0369a1', fontSize: '0.95rem', fontWeight: 'bold' }}>
+            {weatherAlert}
+          </p>
+        </div>
+      )}
+      
 
       {/* NEW: Smart Leak Alert */}
       {dashboardData.alerts.leakDetected && (
