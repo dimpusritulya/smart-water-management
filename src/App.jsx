@@ -155,9 +155,9 @@ export default function App() {
 
       {/* NEW: Smart Leak Alert */}
       {dashboardData.alerts.leakDetected && (
-        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', margin: '0 10px', marginTop: '20px',marginBottom: '30px'}}>
+        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', margin: '0 10px', marginTop: '20px', marginBottom: '30px' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
-            ⚠️ WARNING: TESTING VERCEL DEPLOYMENT!!!
+            ⚠️ WARNING: Potential Pipeline Leak!
           </h3>
           <p style={{ margin: 0, color: '#991b1b', fontSize: '0.95rem' }}>
             {dashboardData.alerts.leakSeverity === 'High' 
