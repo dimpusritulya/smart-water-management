@@ -41,6 +41,24 @@ export default function App() {
   const weeklyData = [120, 135, 100, 150, 90, 150, 160];
   const calculatedTotal = weeklyData.reduce((sum, currentDay) => sum + currentDay, 0);
 
+  // NEW: Smart Auto-Shutoff Logic
+  React.useEffect(() => {
+    // If the pump is running AND the tank hits 100% (or higher)
+    if (dashboardData.controls.pumpStatus === "ON" && dashboardData.sensorData.tankLevel >= 100) {
+      
+      // 1. Turn off the pump in the UI
+      setDashboardData(prev => ({
+        ...prev,
+        controls: { ...prev.controls, pumpStatus: "OFF" }
+      }));
+
+      // 2. Trigger a notification so the user knows what happened
+      alert("⚠️ Tank reached 100% capacity. Pump has been automatically shut off to prevent overflow.");
+      
+      // NOTE: In the live version, you will also send the "OFF" command to Firebase right here!
+    }
+  }, [dashboardData.sensorData.tankLevel, dashboardData.controls.pumpStatus]);
+
   return (
     <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
       
