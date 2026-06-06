@@ -1,4 +1,5 @@
-import { getAuth, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebaseConfig"; // This links your specific database keys!
 import React, { useState } from 'react';
 import UsageGraph from './components/UsageGraph';
 import AlertHistory from './components/AlertHistory';
@@ -29,11 +30,10 @@ export default function App() {
 
 
   const handleLogout = () => {
-    const auth = getAuth();
+    // Notice we removed the "const auth = getAuth();" line because it's already imported above!
     signOut(auth).then(() => {
       console.log("User successfully signed out.");
-      // If your app is set up to watch the auth state, 
-      // this will automatically kick them back to Login.jsx!
+      window.location.reload(); 
     }).catch((error) => {
       console.error("Error signing out: ", error);
     });
