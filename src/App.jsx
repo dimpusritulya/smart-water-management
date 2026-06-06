@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig"; // This links your specific database keys!
-import Login from './Login';
+import Login from "./components/Login";
 import UsageGraph from './components/UsageGraph';
 import AlertHistory from './components/AlertHistory';
 import './App.css';
