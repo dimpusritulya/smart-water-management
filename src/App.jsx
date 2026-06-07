@@ -217,46 +217,32 @@ export default function App() {
 
   // --- WEATHER & LOCATION STATES ---
   const [weatherAlert, setWeatherAlert] = useState(null);
-  const [showLocationModal, setShowLocationModal] = useState(false); // Kept your original modal!
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
-  // 1. SMART CHECK: Silent Permission Query
+  // 1. SMART CHECK: The Bulletproof LocalStorage Method
   useEffect(() => {
-    const checkPermissions = async () => {
-      if (navigator.permissions) {
-        try {
-          const result = await navigator.permissions.query({ name: 'geolocation' });
-          
-          if (result.state === 'granted') {
-            // They already trust us! Fetch silently in the background. No banners.
-            fetchLocationAndWeather(); 
-          } else if (result.state === 'prompt') {
-            // First time ever visiting. Show your friendly explanation modal.
-            setShowLocationModal(true);
-          }
+    // Check the browser's local memory to see if they already answered this
+    const userDecision = localStorage.getItem('smartWaterLocationPref');
 
-          // Listen in case they manually change permissions later
-          result.onchange = () => {
-            if (result.state === 'granted') {
-              setShowLocationModal(false);
-              fetchLocationAndWeather();
-            }
-          };
-        } catch (e) {
-          setShowLocationModal(true); // Fallback
-        }
-      } else {
-        setShowLocationModal(true); // Fallback for older browsers
-      }
-    };
-    
-    checkPermissions();
+    if (userDecision === 'allowed') {
+      // They clicked "Allow" in the past. Fetch silently in the background!
+      fetchLocationAndWeather();
+    } else if (userDecision === 'dismissed') {
+      // They clicked "Not Now" in the past. Respect it and do absolutely nothing.
+    } else {
+      // First time opening the app! Show the explanation modal.
+      setShowLocationModal(true);
+    }
   }, []); 
 
   // 2. THE FORECAST FETCH LOGIC 
   const fetchLocationAndWeather = () => {
-    setShowLocationModal(false); // Hide your custom modal when they click "Allow"
+    setShowLocationModal(false); // Hide your custom modal
 
     navigator.geolocation.getCurrentPosition(async (position) => {
+      // SUCCESS! Save their choice so they never see the modal again.
+      localStorage.setItem('smartWaterLocationPref', 'allowed');
+
       const { latitude, longitude } = position.coords;
 
       // Save to Firebase for the ESP32 to use
@@ -293,7 +279,9 @@ export default function App() {
         console.error("Failed to fetch forecast.", err);
       }
     }, (err) => {
-      console.log("Location access denied.");
+      console.log("Location access denied by browser.");
+      // If they hit block on the browser level, save that decision too so we stop annoying them.
+      localStorage.setItem('smartWaterLocationPref', 'dismissed');
       setShowLocationModal(false);
     });
   };
@@ -332,7 +320,13 @@ export default function App() {
               We use your location to predict rain and storms up to 3 hours in advance, helping you secure your water supply before potential power cuts.
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button onClick={() => setShowLocationModal(false)} style={{ padding: '10px 20px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}>
+              <button 
+                onClick={() => {
+                  localStorage.setItem('smartWaterLocationPref', 'dismissed');
+                  setShowLocationModal(false);
+                }} 
+                style={{ padding: '10px 20px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}
+              >
                 Not Now
               </button>
               <button onClick={fetchLocationAndWeather} style={{ padding: '10px 20px', border: 'none', background: '#3b82f6', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
