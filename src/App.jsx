@@ -102,6 +102,23 @@ export default function App() {
   // 1. Navigation State
   const [activeTab, setActiveTab] = useState('controls'); // 'controls', 'sensors', 'analytics', 'profile'
 
+  // --- DARK MODE STATE ---
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check local storage immediately when the app loads
+    return localStorage.getItem('smartWaterTheme') === 'dark';
+  });
+
+  // Watch for changes: apply the CSS class and save to local storage
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme');
+      localStorage.setItem('smartWaterTheme', 'dark');
+    } else {
+      document.body.classList.remove('dark-theme');
+      localStorage.setItem('smartWaterTheme', 'light');
+    }
+  }, [isDarkMode]);
+
   // 2. Main Dashboard Data (Added leak severity)
   const [dashboardData, setDashboardData] = useState({
     controls: { valveOpen: true, pumpStatus: "OFF" },
@@ -313,10 +330,10 @@ export default function App() {
     {/* --- SOFT LOCATION POPUP --- */}
       {showLocationModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: 'white', padding: '30px', borderRadius: '12px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+          <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '12px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📍</div>
-            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Smart Weather Alerts</h3>
-            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}>Smart Weather Alerts</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5' }}>
               We use your location to predict rain and storms up to 3 hours in advance, helping you secure your water supply before potential power cuts.
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
@@ -325,7 +342,7 @@ export default function App() {
                   localStorage.setItem('smartWaterLocationPref', 'dismissed');
                   setShowLocationModal(false);
                 }} 
-                style={{ padding: '10px 20px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '8px', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ padding: '10px 20px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', borderRadius: '8px', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 Not Now
               </button>
@@ -341,9 +358,17 @@ export default function App() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px', boxSizing: 'border-box', marginBottom: '20px', marginTop: '20px' }}>
         <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
-          <h1 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>Smart Water Dashboard</h1>
-          <p style={{ margin: 0, color: '#64748b', textTransform: 'uppercase', fontSize: '0.9rem' }}>Monitoring: Apartment {profileData.apartment}</p>
+          <h1 style={{ margin: '0 0 5px 0', color: 'var(--text-main)' }}>Smart Water Dashboard</h1>
+          <p style={{ margin: 0, color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.9rem' }}>Monitoring: Apartment {profileData.apartment}</p>
         </div>
+        
+        {/* Dark Mode Toggle Button */}
+        <button 
+          onClick={() => setIsDarkMode(!isDarkMode)} 
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', fontSize: '1.2rem', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+        >
+          {isDarkMode ? '🌙' : '☀️'}
+        </button>
       </div>
 
       {/* --- DYNAMIC WEATHER ALERT --- */}
@@ -377,26 +402,26 @@ export default function App() {
         {/* TAB 1: CONTROLS */}
         {activeTab === 'controls' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Main Supply Valve</h2>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: 'var(--text-main)' }}>Main Supply Valve</h2>
               <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
-                Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
+                Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? 'var(--text-main)' : 'var(--text-muted)' }}>
                   {dashboardData.controls.valveOpen ? "OPEN (Flowing)" : "CLOSED (Shut Off)"}
                 </span>
               </p>
               <div className="switch-container">
-                <span style={{ color: '#64748b', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', marginRight: '8px' }}>OFF</span>
                 <label className="switch">
                   <input type="checkbox" checked={dashboardData.controls.valveOpen} onChange={toggleValve} />
                   <span className="slider"></span>
                 </label>
-                <span style={{ color: '#64748b', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '8px' }}>ON</span>
               </div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Quick Refill</h2>
-              <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '16px' }}>Turn your overhead water pump on or off remotely.</p>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-main)' }}>Quick Refill</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>Turn your overhead water pump on or off remotely.</p>
               <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
                 Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
                   {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
@@ -411,11 +436,11 @@ export default function App() {
             </div>
 
             {/* CARD 3: MAINTENANCE REMINDERS */}
-            <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>Maintenance Reminders</h2>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)' }}>Maintenance Reminders</h2>
                 
                 {/* Only show the Action Required tag if something is actually overdue and not completed */}
                 {reminders.some(r => r.overdue && !r.completed) && (
@@ -483,7 +508,7 @@ export default function App() {
         {/* TAB 2: SENSORS */}
         {activeTab === 'sensors' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Tank Level</h2>
               <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>{dashboardData.sensorData.tankLevel}%</div>
               <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
@@ -491,13 +516,13 @@ export default function App() {
               </div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Water Quality</h2>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px' }}>pH: {dashboardData.sensorData.phLevel}</div>
               <div style={{ fontWeight: 'bold', color: '#10b981', marginBottom: '10px' }}>Safe & Neutral</div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
               <div style={{ marginTop: '10px' }}>
                 <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0ea5e9' }}>{dashboardData.sensorData.flowRate}</span>
@@ -510,7 +535,7 @@ export default function App() {
         {/* TAB 3: ANALYTICS */}
         {activeTab === 'analytics' && (
           <div style={{ display: 'grid', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>Weekly Water Usage</h2>
                 <div style={{ textAlign: 'right' }}>
@@ -527,12 +552,12 @@ export default function App() {
         {/* TAB 4: PROFILE */}
         {activeTab === 'profile' && (
           <div style={{ display: 'grid', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: '#ffffff', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               
               {/* Header with Edit/Save Button */}
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', width: '100%' }}>
                 
-                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>Resident Profile</h2>
+                <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-main)' }}>Resident Profile</h2>
                 
                 <button 
                   onClick={isEditingProfile ? handleSaveProfile : () => setIsEditingProfile(true)}
@@ -615,7 +640,7 @@ export default function App() {
       {/* --- BOTTOM NAVIGATION BAR --- */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--bg-card)',
         borderTop: '1px solid #e2e8f0',
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         padding: '12px 10px',

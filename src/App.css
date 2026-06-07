@@ -1,3 +1,38 @@
+/* --- THEME VARIABLES --- */
+:root {
+  --bg-main: #f8fafc;       /* Light gray app background */
+  --bg-card: #ffffff;       /* Pure white cards */
+  --text-main: #1e293b;     /* Dark slate text */
+  --text-muted: #64748b;    /* Gray subtitle text */
+  --border-color: #e2e8f0;  /* Light borders */
+}
+
+/* When the body has the 'dark-theme' class, swap the variables! */
+body.dark-theme {
+  --bg-main: #0f172a;       /* Very dark blue/black app background */
+  --bg-card: #1e293b;       /* Dark slate cards */
+  --text-main: #f8fafc;     /* Almost white text */
+  --text-muted: #94a3b8;    /* Lighter gray subtitles */
+  --border-color: #334155;  /* Dark borders */
+}
+
+/* Apply the background and text color to the whole page globally */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* We target your existing 'card' class to use the variables automatically */
+.card {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main);
+  border-color: var(--border-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+
+
 /* --- GLOBAL RESET --- */
 * {
   box-sizing: border-box;
