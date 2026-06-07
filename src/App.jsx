@@ -89,7 +89,7 @@ export default function App() {
             });
           }
         });
-        
+
       }
       
       setIsCheckingAuth(false);
@@ -217,48 +217,68 @@ export default function App() {
 
   // --- WEATHER & LOCATION STATES ---
   const [weatherAlert, setWeatherAlert] = useState(null);
-  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false); // Kept your original modal!
 
-  // 1. SMART CHECK: Does the user already trust us?
+  // 1. SMART CHECK: Silent Permission Query
   useEffect(() => {
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-        if (result.state === 'granted') {
-          fetchLocationAndWeather(); // Already trusted, fetch silently!
-        } else if (result.state === 'prompt') {
-          setShowLocationModal(true); // First time, show the soft popup!
-        }
-      }).catch(() => setShowLocationModal(true));
-    } else {
-      setShowLocationModal(true); // Fallback for older browsers like Safari
-    }
-  }, []);
+    const checkPermissions = async () => {
+      if (navigator.permissions) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
+          
+          if (result.state === 'granted') {
+            // They already trust us! Fetch silently in the background. No banners.
+            fetchLocationAndWeather(); 
+          } else if (result.state === 'prompt') {
+            // First time ever visiting. Show your friendly explanation modal.
+            setShowLocationModal(true);
+          }
 
-  // 2. THE FORECAST FETCH LOGIC
-  const fetchLocationAndWeather = () => {
-    setShowLocationModal(false); // Hide the soft popup
+          // Listen in case they manually change permissions later
+          result.onchange = () => {
+            if (result.state === 'granted') {
+              setShowLocationModal(false);
+              fetchLocationAndWeather();
+            }
+          };
+        } catch (e) {
+          setShowLocationModal(true); // Fallback
+        }
+      } else {
+        setShowLocationModal(true); // Fallback for older browsers
+      }
+    };
     
-    // This triggers the official browser prompt
+    checkPermissions();
+  }, []); 
+
+  // 2. THE FORECAST FETCH LOGIC 
+  const fetchLocationAndWeather = () => {
+    setShowLocationModal(false); // Hide your custom modal when they click "Allow"
+
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
+
+      // Save to Firebase for the ESP32 to use
+      if (auth.currentUser) {
+        update(ref(db, `users/${auth.currentUser.uid}/profile`), {
+          lat: latitude.toFixed(4),
+          lon: longitude.toFixed(4)
+        });
+      }
       
       try {
-        // Securely pulling the key from the .env.local file!
         const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
-        
-        // Calling the FORECAST endpoint, not the current weather endpoint
         const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}`);
         const data = await res.json();
         
-        // data.list[0] is the exact forecast for the next 3-hour window
         const nextForecast = data.list[0];
         const weatherCode = nextForecast.weather[0].id; 
-        const windSpeed = nextForecast.wind.speed; // Speed in meters/second
+        const windSpeed = nextForecast.wind.speed;
 
-        // Define strict thresholds
         const isThunderstorm = (weatherCode >= 200 && weatherCode <= 232);
-        const isHeavyRain = [501, 502, 503, 504, 522, 531].includes(weatherCode);
-        const isHighWind = windSpeed >= 10; // 11 m/s is roughly 40 km/h (fresh to strong gale breeze)
+        const isHeavyRain = [500, 501, 502, 503, 504, 522, 531].includes(weatherCode);
+        const isHighWind = windSpeed >= 11;
 
         if (isThunderstorm) {
           setWeatherAlert("⚡ Thunderstorms forecasted within 3 hours. High risk of lightning-induced power outages. Consider securing your water supply now.");
@@ -267,15 +287,14 @@ export default function App() {
         } else if (isHighWind) {
           setWeatherAlert(`💨 Severe wind gusts forecasted (${Math.round(windSpeed * 3.6)} km/h). High risk of falling branches on power lines. Pre-filling tank recommended.`);
         } else {
-          // Normal weather, light rain, or regular clouds will pass through SILENTLY
           setWeatherAlert(null); 
         }
       } catch (err) {
         console.error("Failed to fetch forecast.", err);
       }
     }, (err) => {
-      console.log("User denied location access.", err);
-      setShowLocationModal(false); // Fails gracefully without breaking the app
+      console.log("Location access denied.");
+      setShowLocationModal(false);
     });
   };
 
