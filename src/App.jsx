@@ -325,12 +325,12 @@ export default function App() {
   // Your actual working dashboard code starts here:
 
   return (
-    <div className="app-container" style={{ paddingBottom: '80px' }}> {/* Padding prevents footer overlap */}
+    <div className="app-container" style={{ paddingBottom: '80px', backgroundColor: 'var(--bg-main)', minHeight: '100vh', transition: 'background-color 0.3s ease' }}>
 
-    {/* --- SOFT LOCATION POPUP --- */}
+      {/* --- SMART LOCATION ONBOARDING MODAL --- */}
       {showLocationModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '12px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '12px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📍</div>
             <h3 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}>Smart Weather Alerts</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5' }}>
@@ -342,7 +342,7 @@ export default function App() {
                   localStorage.setItem('smartWaterLocationPref', 'dismissed');
                   setShowLocationModal(false);
                 }} 
-                style={{ padding: '10px 20px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', borderRadius: '8px', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ padding: '10px 20px', border: '1px solid var(--border-color)', background: 'transparent', borderRadius: '8px', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 Not Now
               </button>
@@ -354,9 +354,8 @@ export default function App() {
         </div>
       )}
 
-
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px', boxSizing: 'border-box', marginBottom: '20px', marginTop: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px', boxSizing: 'border-box', marginBottom: '20px', paddingTop: '20px' }}>
         <div className="header" style={{ textAlign: 'left', paddingBottom: '0' }}>
           <h1 style={{ margin: '0 0 5px 0', color: 'var(--text-main)' }}>Smart Water Dashboard</h1>
           <p style={{ margin: 0, color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.9rem' }}>Monitoring: Apartment {profileData.apartment}</p>
@@ -365,25 +364,24 @@ export default function App() {
         {/* Dark Mode Toggle Button */}
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)} 
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', fontSize: '1.2rem', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', fontSize: '1.2rem', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
         >
           {isDarkMode ? '🌙' : '☀️'}
         </button>
       </div>
 
-      {/* --- DYNAMIC WEATHER ALERT --- */}
+      {/* DYNAMIC WEATHER ALERT */}
       {weatherAlert && (
-        <div style={{ background: '#e0f2fe', borderLeft: '6px solid #0284c7', padding: '15px', borderRadius: '8px', marginBottom: '30px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ background: '#e0f2fe', borderLeft: '6px solid #0284c7', padding: '15px', borderRadius: '8px', marginBottom: '30px', margin: '0 10px', display: 'flex', alignItems: 'center' }}>
           <p style={{ margin: 0, color: '#0369a1', fontSize: '0.95rem', fontWeight: 'bold' }}>
             {weatherAlert}
           </p>
         </div>
       )}
 
-
-      {/* NEW: Smart Leak Alert */}
+      {/* SMART LEAK ALERT */}
       {dashboardData.alerts.leakDetected && (
-        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', margin: '0 10px', marginTop: '20px', marginBottom: '30px' }}>
+        <div style={{ background: '#fee2e2', borderLeft: '6px solid #ef4444', padding: '16px', borderRadius: '8px', margin: '0 10px', marginBottom: '30px' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#b91c1c', display: 'flex', alignItems: 'center' }}>
             ⚠️ WARNING: Potential Pipeline Leak!
           </h3>
@@ -398,14 +396,13 @@ export default function App() {
       {/* --- TAB CONTENT RENDERING --- */}
       <main style={{ padding: '0 10px' }}>
 
-
         {/* TAB 1: CONTROLS */}
         {activeTab === 'controls' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: 'var(--text-main)' }}>Main Supply Valve</h2>
-              <p style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
-                Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? 'var(--text-main)' : 'var(--text-muted)' }}>
+              <p style={{ marginBottom: '16px', fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.valveOpen ? '#10b981' : '#ef4444' }}>
                   {dashboardData.controls.valveOpen ? "OPEN (Flowing)" : "CLOSED (Shut Off)"}
                 </span>
               </p>
@@ -419,11 +416,11 @@ export default function App() {
               </div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : 'none' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', border: dashboardData.controls.pumpStatus === "ON" ? '2px solid #3b82f6' : '1px solid transparent' }}>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-main)' }}>Quick Refill</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>Turn your overhead water pump on or off remotely.</p>
-              <p style={{ marginBottom: '20px', fontSize: '1rem' }}>
-                Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : '#64748b' }}>
+              <p style={{ marginBottom: '20px', fontSize: '1rem', color: 'var(--text-main)' }}>
+                Pump Status: <span style={{ fontWeight: 'bold', color: dashboardData.controls.pumpStatus === "ON" ? '#3b82f6' : 'var(--text-muted)' }}>
                   {dashboardData.controls.pumpStatus === "ON" ? "RUNNING" : "STANDBY (Off)"}
                 </span>
               </p>
@@ -435,14 +432,9 @@ export default function App() {
               </button>
             </div>
 
-            {/* CARD 3: MAINTENANCE REMINDERS */}
-            <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-              
-              {/* Header */}
+            <div className="card" style={{ gridColumn: '1 / -1', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)' }}>Maintenance Reminders</h2>
-                
-                {/* Only show the Action Required tag if something is actually overdue and not completed */}
                 {reminders.some(r => r.overdue && !r.completed) && (
                   <span style={{ background: '#fef3c7', color: '#d97706', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                     Action Required
@@ -450,32 +442,19 @@ export default function App() {
                 )}
               </div>
 
-              {/* Conditional Rendering: Empty State vs The List */}
               {reminders.length === 0 ? (
-                
                 <div style={{ textAlign: 'center', padding: '40px 0', animation: 'fadeIn 0.5s ease-in' }}>
                   <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>✨</span>
-                  <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#475569' }}>You're all caught up!</p>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', marginTop: '4px' }}>No reminders currently.</p>
+                  <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>You're all caught up!</p>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>No reminders currently.</p>
                 </div>
-
               ) : (
-
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {reminders.map((reminder) => (
-                    <li key={reminder.id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', opacity: reminder.completed ? 0 : 1, transition: 'all 0.5s ease-out' }}>
-                      
-                      {/* The Custom Circular Checkbox */}
+                    <li key={reminder.id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', opacity: reminder.completed ? 0.5 : 1, transition: 'all 0.5s ease-out' }}>
                       <div 
                         onClick={() => toggleReminder(reminder.id)}
-                        style={{ 
-                          width: '22px', height: '22px', borderRadius: '50%', 
-                          border: reminder.completed ? 'none' : '2px solid #cbd5e1', 
-                          backgroundColor: reminder.completed ? '#3b82f6' : 'transparent',
-                          display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                          cursor: 'pointer', marginTop: '2px', flexShrink: 0,
-                          transition: 'all 0.2s'
-                        }}
+                        style={{ width: '22px', height: '22px', borderRadius: '50%', border: reminder.completed ? 'none' : '2px solid var(--border-color)', backgroundColor: reminder.completed ? '#3b82f6' : 'transparent', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', marginTop: '2px', flexShrink: 0 }}
                       >
                         {reminder.completed && (
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -483,50 +462,44 @@ export default function App() {
                           </svg>
                         )}
                       </div>
-
-                      {/* Text Details */}
                       <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleReminder(reminder.id)}>
-                        <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: reminder.completed ? '500' : '600', color: reminder.completed ? '#94a3b8' : '#1e293b', textDecoration: reminder.completed ? 'line-through' : 'none', transition: 'all 0.2s' }}>
+                        <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: reminder.completed ? '500' : '600', color: reminder.completed ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: reminder.completed ? 'line-through' : 'none' }}>
                           {reminder.title}
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: reminder.completed ? '#94a3b8' : (reminder.overdue ? '#ef4444' : '#64748b'), fontWeight: (!reminder.completed && reminder.overdue) ? 'bold' : 'normal', marginTop: '4px', transition: 'color 0.2s' }}>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: reminder.completed ? 'var(--text-muted)' : (reminder.overdue ? '#ef4444' : 'var(--text-muted)'), fontWeight: (!reminder.completed && reminder.overdue) ? 'bold' : 'normal', marginTop: '4px' }}>
                           {reminder.desc}
                         </p>
                       </div>
-
                     </li>
                   ))}
                 </ul>
-                
               )}
             </div>
-
           </div> 
         )}
         
-
-        {/* TAB 2: SENSORS */}
+        {/* TAB 2: SENSORS (FIXED INVISIBLE TEXT) */}
         {activeTab === 'sensors' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Tank Level</h2>
-              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>{dashboardData.sensorData.tankLevel}%</div>
-              <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: 'var(--text-main)' }}>Tank Level</h2>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '16px' }}>{dashboardData.sensorData.tankLevel}%</div>
+              <div style={{ width: '100%', backgroundColor: 'var(--border-color)', borderRadius: '999px', height: '24px', overflow: 'hidden' }}>
                 <div style={{ width: `${dashboardData.sensorData.tankLevel}%`, backgroundColor: '#3b82f6', height: '100%' }}></div>
               </div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#1e293b' }}>Water Quality</h2>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px' }}>pH: {dashboardData.sensorData.phLevel}</div>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: 'var(--text-main)' }}>Water Quality</h2>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '5px' }}>pH: {dashboardData.sensorData.phLevel}</div>
               <div style={{ fontWeight: 'bold', color: '#10b981', marginBottom: '10px' }}>Safe & Neutral</div>
             </div>
 
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#1e293b' }}>Live Water Flow</h2>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-main)' }}>Live Water Flow</h2>
               <div style={{ marginTop: '10px' }}>
                 <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0ea5e9' }}>{dashboardData.sensorData.flowRate}</span>
-                <span style={{ fontSize: '1.2rem', color: '#64748b', marginLeft: '5px' }}>L/min</span>
+                <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginLeft: '5px' }}>L/min</span>
               </div>
             </div>
           </div>
@@ -535,12 +508,12 @@ export default function App() {
         {/* TAB 3: ANALYTICS */}
         {activeTab === 'analytics' && (
           <div style={{ display: 'grid', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#1e293b' }}>Weekly Water Usage</h2>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)' }}>Weekly Water Usage</h2>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Estimated Total</p>
-                  <h2 style={{ margin: 0, color: '#3b82f6' }}>{calculatedTotal.toLocaleString()} <span style={{ fontSize: '1rem', color: '#64748b' }}>Liters</span></h2>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Estimated Total</p>
+                  <h2 style={{ margin: 0, color: '#3b82f6' }}>{calculatedTotal.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Liters</span></h2>
                 </div>
               </div>
               <UsageGraph />
@@ -552,85 +525,72 @@ export default function App() {
         {/* TAB 4: PROFILE */}
         {activeTab === 'profile' && (
           <div style={{ display: 'grid', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
-            <div className="card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--bg-card)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               
-              {/* Header with Edit/Save Button */}
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', width: '100%' }}>
-                
                 <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-main)' }}>Resident Profile</h2>
-                
                 <button 
                   onClick={isEditingProfile ? handleSaveProfile : () => setIsEditingProfile(true)}
-                  style={{ position: 'absolute', right: 0, padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: isEditingProfile ? '#10b981' : '#f1f5f9', color: isEditingProfile ? 'white' : '#334155' }}
+                  style={{ position: 'absolute', right: 0, padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', fontWeight: 'bold', cursor: 'pointer', backgroundColor: isEditingProfile ? '#10b981' : 'var(--bg-main)', color: isEditingProfile ? 'white' : 'var(--text-main)' }}
                 >
                   {isEditingProfile ? 'Save Changes' : 'Edit Profile'}
                 </button>
               </div>
               
-              <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', marginBottom: '20px' }} />
+              <hr style={{ border: '0', borderTop: '1px solid var(--border-color)', marginBottom: '20px' }} />
 
-              {/* Dynamic Form / View Area */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                
-                {/* Name */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Full Name:</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>Full Name:</span>
                   {isEditingProfile ? (
-                    <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
                   ) : (
-                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.name}</strong>
+                    <strong style={{ flex: 1, textAlign: 'right', color: 'var(--text-main)' }}>{profileData.name}</strong>
                   )}
                 </div>
 
-                {/* Apartment */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Apartment No:</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>Apartment No:</span>
                   {isEditingProfile ? (
-                    <input type="text" name="apartment" value={profileData.apartment} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="text" name="apartment" value={profileData.apartment} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
                   ) : (
-                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.apartment}</strong>
+                    <strong style={{ flex: 1, textAlign: 'right', color: 'var(--text-main)' }}>{profileData.apartment}</strong>
                   )}
                 </div>
 
-                {/* Tank Capacity */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Tank Capacity (L):</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>Tank Capacity (L):</span>
                   {isEditingProfile ? (
-                    <input type="number" name="tankCapacity" value={profileData.tankCapacity} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="number" name="tankCapacity" value={profileData.tankCapacity} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
                   ) : (
-                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.tankCapacity} Liters</strong>
+                    <strong style={{ flex: 1, textAlign: 'right', color: 'var(--text-main)' }}>{profileData.tankCapacity} Liters</strong>
                   )}
                 </div>
 
-                <hr style={{ border: '0', borderTop: '1px dashed #e2e8f0', margin: '10px 0' }} />
+                <hr style={{ border: '0', borderTop: '1px dashed var(--border-color)', margin: '10px 0' }} />
 
-                {/* Plumber */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Plumber Contact:</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>Plumber Contact:</span>
                   {isEditingProfile ? (
-                    <input type="text" name="plumberContact" value={profileData.plumberContact} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="text" name="plumberContact" value={profileData.plumberContact} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
                   ) : (
-                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.plumberContact}</strong>
+                    <strong style={{ flex: 1, textAlign: 'right', color: 'var(--text-main)' }}>{profileData.plumberContact}</strong>
                   )}
                 </div>
 
-                {/* Building Manager */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontWeight: 'bold', width: '40%' }}>Building Manager:</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>Building Manager:</span>
                   {isEditingProfile ? (
-                    <input type="text" name="buildingManager" value={profileData.buildingManager} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="text" name="buildingManager" value={profileData.buildingManager} onChange={handleProfileChange} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-main)' }} />
                   ) : (
-                    <strong style={{ flex: 1, textAlign: 'right' }}>{profileData.buildingManager}</strong>
+                    <strong style={{ flex: 1, textAlign: 'right', color: 'var(--text-main)' }}>{profileData.buildingManager}</strong>
                   )}
                 </div>
-
               </div>
 
-              {/* Leave your Sign Out button exactly as it was down here */}
               <button onClick={handleLogout} style={{ width: '100%', marginTop: '30px', padding: '12px', borderRadius: '8px', border: '1px solid #ef4444', backgroundColor: 'transparent', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>
                 Sign Out
               </button>
-
             </div>
           </div>
         )}
@@ -638,15 +598,7 @@ export default function App() {
       </main>
 
       {/* --- BOTTOM NAVIGATION BAR --- */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        backgroundColor: 'var(--bg-card)',
-        borderTop: '1px solid #e2e8f0',
-        display: 'flex', justifyContent: 'space-around', alignItems: 'center',
-        padding: '12px 10px',
-        boxShadow: '0 -4px 6px -1px rgb(0 0 0 / 0.05)',
-        zIndex: 1000
-      }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '12px 10px', zIndex: 1000 }}>
         {['controls', 'sensors', 'analytics', 'profile'].map((tab) => (
           <button 
             key={tab}
@@ -654,7 +606,7 @@ export default function App() {
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
-              color: activeTab === tab ? '#3b82f6' : '#94a3b8',
+              color: activeTab === tab ? '#3b82f6' : 'var(--text-muted)',
               fontWeight: activeTab === tab ? 'bold' : 'normal',
               transition: 'color 0.2s'
             }}

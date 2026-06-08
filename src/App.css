@@ -211,3 +211,33 @@ input:checked + .slider:before {
 .status-red { 
   color: #ef4444; 
 }
+
+
+/* Force the absolute background of the browser to obey the theme */
+html, body, #root {
+  background-color: var(--bg-main) !important;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease;
+}
+
+/* 1. Force the physical browser window to be dark and remove default browser margins */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: var(--bg-main) !important;
+  width: 100%;
+  height: 100%;
+}
+
+/* 2. Turn the React wrapper into a Flexbox to permanently disable Margin Collapse */
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main);
+}

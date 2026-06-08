@@ -11,25 +11,27 @@ const mockHistory = [
 function AlertHistory() {
   return (
     <div className="card" style={{ gridColumn: '1 / -1', marginTop: '20px', textAlign: 'left' }}>
-      <h2 style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <FaHistory color="#64748b" style={{ marginRight: '10px' }} /> 
+      <h2 style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', color: 'var(--text-main)' }}>
+        <FaHistory color="var(--text-muted)" style={{ marginRight: '10px' }} /> 
         System Alert History
       </h2>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: '12px', color: '#475569' }}>Date & Time</th>
-              <th style={{ padding: '12px', color: '#475569' }}>Alert Type</th>
-              <th style={{ padding: '12px', color: '#475569' }}>Severity</th>
-              <th style={{ padding: '12px', color: '#475569' }}>Status</th>
+            {/* Removed the hardcoded background so it blends seamlessly into the card */}
+            <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+              <th style={{ padding: '12px', color: 'var(--text-muted)' }}>Date & Time</th>
+              <th style={{ padding: '12px', color: 'var(--text-muted)' }}>Alert Type</th>
+              <th style={{ padding: '12px', color: 'var(--text-muted)' }}>Severity</th>
+              <th style={{ padding: '12px', color: 'var(--text-muted)' }}>Status</th>
             </tr>
           </thead>
           <tbody>
             {mockHistory.map((alert) => (
-              <tr key={alert.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '12px', color: '#64748b' }}>{alert.date}</td>
-                <td style={{ padding: '12px', fontWeight: 'bold', color: '#1e293b' }}>{alert.type}</td>
+              <tr key={alert.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{alert.date}</td>
+                {/* Made the alert type text stand out using the main text color */}
+                <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--text-main)' }}>{alert.type}</td>
                 <td style={{ padding: '12px' }}>
                   <span style={{
                     padding: '4px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold',
